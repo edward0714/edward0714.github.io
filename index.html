@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edward Hu 的網站入口</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', -apple-system, sans-serif;
+            background: #0b1120;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(96,165,250,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(96,165,250,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e2e8f0, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 48px;
+            text-align: center;
+        }
+        .site-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .site-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.25s, box-shadow 0.25s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .site-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(96,165,250,0.12);
+            border-color: rgba(96,165,250,0.3);
+        }
+        .site-card .icon { font-size: 44px; margin-bottom: 16px; }
+        .site-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .site-card p { color: #94a3b8; font-size: 14px; line-height: 1.7; }
+        .site-card .badge {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-blue { background: rgba(96,165,250,0.15); color: #60a5fa; }
+        .badge-purple { background: rgba(167,139,250,0.15); color: #a78bfa; }
+        footer {
+            margin-top: 60px;
+            color: #475569;
+            font-size: 13px;
+        }
+        @media (max-width: 640px) {
+            h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<h1>🌐 Edward Hu 的網站入口</h1>
+<p class="subtitle">點擊下方卡片進入各個子網站</p>
+
+<div class="site-grid">
+    <a href="hermes-Stock-Report/" class="site-card">
+        <div class="icon">📊</div>
+        <h2>財經晨報</h2>
+        <p>每日自動生成的機構級財經研究報告，包含台股分析、全球市況、資金流向與事件日曆。</p>
+        <span class="badge badge-blue">📈 每日更新</span>
+    </a>
+    <a href="travel/" class="site-card">
+        <div class="icon">✈️</div>
+        <h2>旅伴小幫手</h2>
+        <p>智慧旅遊規劃平台 — 景點探索、行程編排、預算管理、實用資訊一站搞定。</p>
+        <span class="badge badge-purple">🗺️ 旅遊規劃</span>
+    </a>
+</div>
+
+<footer>© 2026 Edward Hu — Built with ❤️</footer>
+</body>
+</html>

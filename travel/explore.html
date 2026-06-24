@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探索景點 — 旅伴小幫手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="navbar">
+    <div class="logo">✈️ 旅伴小幫手</div>
+    <nav>
+        <a href="index.html">首頁</a>
+        <a href="explore.html" class="active">探索景點</a>
+        <a href="itinerary.html">行程規劃</a>
+        <a href="info.html">實用資訊</a>
+    </nav>
+</div>
+
+<section class="page-hero">
+    <h1>🗺️ 探索景點</h1>
+    <p>尋找世界各地的熱門景點與隱藏秘境</p>
+</section>
+
+<div class="filter-bar">
+    <button class="filter-btn active">全部</button>
+    <button class="filter-btn">🏛️ 歷史文化</button>
+    <button class="filter-btn">🍜 美食</button>
+    <button class="filter-btn">🌿 自然</button>
+    <button class="filter-btn">🛍️ 購物</button>
+    <button class="filter-btn">🎢 娛樂</button>
+</div>
+
+<div class="spot-grid">
+    <div class="spot-card" data-category="歷史文化">
+        <div class="spot-img" style="background: linear-gradient(135deg, #1e3a5f, #3b82f6);">🗼</div>
+        <div class="spot-body">
+            <h3>淺草寺</h3>
+            <span class="spot-loc">📍 東京 · 台東區</span>
+            <p>東京都內最古老的寺廟，雷門大燈籠是經典地標，仲見世通商店街充滿江戶風情。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.6</span>
+                <span>🕐 1-2 小時</span>
+                <span>💰 免費</span>
+            </div>
+        </div>
+    </div>
+    <div class="spot-card" data-category="歷史文化">
+        <div class="spot-img" style="background: linear-gradient(135deg, #1a3a2a, #2d6a4f);">🏯</div>
+        <div class="spot-body">
+            <h3>景福宮</h3>
+            <span class="spot-loc">📍 首爾 · 鐘路區</span>
+            <p>朝鮮王朝的正宮，可體驗韓服穿越時空，守門將換崗儀式是必看亮點。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.5</span>
+                <span>🕐 2-3 小時</span>
+                <span>💰 ₩3,000</span>
+            </div>
+        </div>
+    </div>
+    <div class="spot-card" data-category="美食">
+        <div class="spot-img" style="background: linear-gradient(135deg, #4a1942, #9d174d);">🍜</div>
+        <div class="spot-body">
+            <h3>築地市場</h3>
+            <span class="spot-loc">📍 東京 · 中央區</span>
+            <p>東京的廚房，新鮮壽司、海鮮丼、玉子燒應有盡有，早餐來一碗海膽丼是奢侈享受。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.4</span>
+                <span>🕐 2 小時</span>
+                <span>💰 ¥2,000~</span>
+            </div>
+        </div>
+    </div>
+    <div class="spot-card" data-category="購物">
+        <div class="spot-img" style="background: linear-gradient(135deg, #2c1810, #92400e);">🛍️</div>
+        <div class="spot-body">
+            <h3>明洞</h3>
+            <span class="spot-loc">📍 首爾 · 中區</span>
+            <p>韓國最著名的購物街，美妝、服飾、小吃攤密集，晚上比白天更熱鬧。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.3</span>
+                <span>🕐 2-4 小時</span>
+                <span>💰 丰儉由人</span>
+            </div>
+        </div>
+    </div>
+    <div class="spot-card" data-category="娛樂">
+        <div class="spot-img" style="background: linear-gradient(135deg, #2d1b69, #7c3aed);">🎢</div>
+        <div class="spot-body">
+            <h3>東京迪士尼樂園</h3>
+            <span class="spot-loc">📍 千葉 · 浦安市</span>
+            <p>夢想與魔法的王國，七大主題園區，無論大人小孩都能找到歡樂。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.8</span>
+                <span>🕐 整天</span>
+                <span>💰 ¥7,900~</span>
+            </div>
+        </div>
+    </div>
+    <div class="spot-card" data-category="自然">
+        <div class="spot-img" style="background: linear-gradient(135deg, #065f46, #059669);">🌿</div>
+        <div class="spot-body">
+            <h3>北村韓屋村</h3>
+            <span class="spot-loc">📍 首爾 · 鐘路區</span>
+            <p>傳統韓屋聚落，漫步在小巷中感受朝鮮時代的建築之美，每個轉角都是風景。</p>
+            <div class="spot-meta">
+                <span>⭐ 4.5</span>
+                <span>🕐 1.5 小時</span>
+                <span>💰 免費</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    ✈️ 旅伴小幫手 — 探索無限可能
+</footer>
+
+<script>
+// 分類篩選
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelector('.filter-btn.active').classList.remove('active');
+        btn.classList.add('active');
+        const cat = btn.textContent.trim();
+        document.querySelectorAll('.spot-card').forEach(card => {
+            if (cat === '全部' || card.dataset.category === cat.slice(2)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

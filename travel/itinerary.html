@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行程規劃 — 旅伴小幫手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="navbar">
+    <div class="logo">✈️ 旅伴小幫手</div>
+    <nav>
+        <a href="index.html">首頁</a>
+        <a href="explore.html">探索景點</a>
+        <a href="itinerary.html" class="active">行程規劃</a>
+        <a href="info.html">實用資訊</a>
+    </nav>
+</div>
+
+<section class="page-hero">
+    <h1>📋 行程規劃</h1>
+    <p>自由組合每天的景點與活動，打造專屬旅程</p>
+</section>
+
+<div class="planner-layout">
+    <!-- 左側：行程列表 -->
+    <div class="planner-main">
+        <div class="day-card">
+            <div class="day-header">
+                <span class="day-num">Day 1</span>
+                <input class="day-date" type="date" value="2026-07-01">
+                <span class="day-weather">☀️ 28°C</span>
+            </div>
+            <div class="day-items">
+                <div class="item">
+                    <span class="item-time">09:00</span>
+                    <div class="item-content">
+                        <strong>抵達成田機場</strong>
+                        <p>搭 Skyliner 到上野駅 (約 41 分鐘)</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">12:00</span>
+                    <div class="item-content">
+                        <strong>午餐 — 阿美橫丁</strong>
+                        <p>品嚐在地串燒、海鮮丼</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">14:00</span>
+                    <div class="item-content">
+                        <strong>淺草寺 & 仲見世通</strong>
+                        <p>雷門拍照、買人形燒、抽籤</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">18:00</span>
+                    <div class="item-content">
+                        <strong>晴空塔夜景</strong>
+                        <p>登上 350m 展望台看東京日落</p>
+                    </div>
+                </div>
+            </div>
+            <div class="day-actions">
+                <button class="btn-add">+ 新增行程</button>
+            </div>
+        </div>
+
+        <div class="day-card">
+            <div class="day-header">
+                <span class="day-num">Day 2</span>
+                <input class="day-date" type="date" value="2026-07-02">
+                <span class="day-weather">☀️ 30°C</span>
+            </div>
+            <div class="day-items">
+                <div class="item">
+                    <span class="item-time">08:30</span>
+                    <div class="item-content">
+                        <strong>築地市場早餐</strong>
+                        <p>排隊名店壽司大 / 大和壽司</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">10:30</span>
+                    <div class="item-content">
+                        <strong>澀谷 SKY 展望台</strong>
+                        <p>俯瞰澀谷十字路口，超美天臺</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">13:00</span>
+                    <div class="item-content">
+                        <strong>原宿 · 竹下通</strong>
+                        <p>可麗餅、古著、扭蛋</p>
+                    </div>
+                </div>
+                <div class="item">
+                    <span class="item-time">17:00</span>
+                    <div class="item-content">
+                        <strong>新宿御苑</strong>
+                        <p>散步賞景，日本庭園與法式庭園並存</p>
+                    </div>
+                </div>
+            </div>
+            <div class="day-actions">
+                <button class="btn-add">+ 新增行程</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右側：預算面板 -->
+    <div class="budget-panel">
+        <h3>💰 預算概覽</h3>
+        <div class="budget-item">
+            <span>✈️ 機票</span>
+            <span class="budget-val">NT$ 15,000</span>
+        </div>
+        <div class="budget-item">
+            <span>🏨 住宿 (3晚)</span>
+            <span class="budget-val">NT$ 9,000</span>
+        </div>
+        <div class="budget-item">
+            <span>🍜 餐飲</span>
+            <span class="budget-val">NT$ 6,000</span>
+        </div>
+        <div class="budget-item">
+            <span>🚃 交通</span>
+            <span class="budget-val">NT$ 3,500</span>
+        </div>
+        <div class="budget-item">
+            <span>🎫 門票</span>
+            <span class="budget-val">NT$ 3,000</span>
+        </div>
+        <div class="budget-total">
+            <span>總計</span>
+            <span class="budget-val">NT$ 36,500</span>
+        </div>
+        <button class="btn-share">📤 分享行程</button>
+        <button class="btn-export">📥 匯出 PDF</button>
+    </div>
+</div>
+
+<footer>
+    ✈️ 旅伴小幫手 — 你的行程，由你定義
+</footer>
+
+</body>
+</html>
