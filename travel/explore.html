@@ -5,12 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>探索景點 — 旅伴小幫手</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .spot-img .added-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(52,211,153,0.85);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .spot-card.added { border-color: rgba(52,211,153,0.3); }
+        .search-bar {
+            max-width: 560px;
+            margin: 0 auto 20px;
+            display: flex;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 40px;
+            overflow: hidden;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 14px 24px;
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-size: 15px;
+            outline: none;
+        }
+        .search-bar input::placeholder { color: #64748b; }
+        .search-bar button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #60a5fa, #7c3aed);
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .trip-selector {
+            max-width: 1100px;
+            margin: 0 auto 16px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .trip-selector label { color: #94a3b8; font-size: 14px; }
+        .trip-selector select {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+            min-width: 200px;
+        }
+        .trip-selector select:focus { border-color: #60a5fa; }
+        .trip-selector select option { background: #1e293b; color: #e2e8f0; }
+        .trip-selector .no-trips-hint { color: #64748b; font-size: 13px; }
+        .spot-search-highlight { background: rgba(96,165,250,0.15); padding: 2px 4px; border-radius: 4px; }
+    </style>
 </head>
 <body>
-
 <div class="bg-grid"></div>
 <div class="navbar">
-    <div class="logo">✈️ 旅伴小幫手</div>
+    <div class="logo" onclick="location.href='index.html'">✈️ 旅伴小幫手</div>
     <nav>
         <a href="index.html">首頁</a>
         <a href="explore.html" class="active">探索景點</a>
@@ -19,121 +84,278 @@
     </nav>
 </div>
 
-<section class="page-hero">
+<section class="page-hero" style="padding-bottom:20px;">
     <h1>🗺️ 探索景點</h1>
-    <p>尋找世界各地的熱門景點與隱藏秘境</p>
+    <p>尋找世界各地的熱門景點，一鍵加入你的行程</p>
 </section>
 
-<div class="filter-bar">
-    <button class="filter-btn active">全部</button>
-    <button class="filter-btn">🏛️ 歷史文化</button>
-    <button class="filter-btn">🍜 美食</button>
-    <button class="filter-btn">🌿 自然</button>
-    <button class="filter-btn">🛍️ 購物</button>
-    <button class="filter-btn">🎢 娛樂</button>
+<!-- Trip selector -->
+<div class="trip-selector" id="tripSelector">
+    <label>📋 加入至行程：</label>
+    <select id="tripSelect" onchange="storeSelectedTrip()">
+        <option value="">— 請先選擇一個旅程 —</option>
+    </select>
+    <span class="no-trips-hint" id="noTripsHint" style="display:none;">還沒有旅程？去 <a href="index.html" style="color:#60a5fa;">建立一個</a></span>
 </div>
 
-<div class="spot-grid">
-    <div class="spot-card" data-category="歷史文化">
-        <div class="spot-img" style="background: linear-gradient(135deg, #1e3a5f, #3b82f6);">🗼</div>
-        <div class="spot-body">
-            <h3>淺草寺</h3>
-            <span class="spot-loc">📍 東京 · 台東區</span>
-            <p>東京都內最古老的寺廟，雷門大燈籠是經典地標，仲見世通商店街充滿江戶風情。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.6</span>
-                <span>🕐 1-2 小時</span>
-                <span>💰 免費</span>
-            </div>
-        </div>
-    </div>
-    <div class="spot-card" data-category="歷史文化">
-        <div class="spot-img" style="background: linear-gradient(135deg, #1a3a2a, #2d6a4f);">🏯</div>
-        <div class="spot-body">
-            <h3>景福宮</h3>
-            <span class="spot-loc">📍 首爾 · 鐘路區</span>
-            <p>朝鮮王朝的正宮，可體驗韓服穿越時空，守門將換崗儀式是必看亮點。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.5</span>
-                <span>🕐 2-3 小時</span>
-                <span>💰 ₩3,000</span>
-            </div>
-        </div>
-    </div>
-    <div class="spot-card" data-category="美食">
-        <div class="spot-img" style="background: linear-gradient(135deg, #4a1942, #9d174d);">🍜</div>
-        <div class="spot-body">
-            <h3>築地市場</h3>
-            <span class="spot-loc">📍 東京 · 中央區</span>
-            <p>東京的廚房，新鮮壽司、海鮮丼、玉子燒應有盡有，早餐來一碗海膽丼是奢侈享受。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.4</span>
-                <span>🕐 2 小時</span>
-                <span>💰 ¥2,000~</span>
-            </div>
-        </div>
-    </div>
-    <div class="spot-card" data-category="購物">
-        <div class="spot-img" style="background: linear-gradient(135deg, #2c1810, #92400e);">🛍️</div>
-        <div class="spot-body">
-            <h3>明洞</h3>
-            <span class="spot-loc">📍 首爾 · 中區</span>
-            <p>韓國最著名的購物街，美妝、服飾、小吃攤密集，晚上比白天更熱鬧。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.3</span>
-                <span>🕐 2-4 小時</span>
-                <span>💰 丰儉由人</span>
-            </div>
-        </div>
-    </div>
-    <div class="spot-card" data-category="娛樂">
-        <div class="spot-img" style="background: linear-gradient(135deg, #2d1b69, #7c3aed);">🎢</div>
-        <div class="spot-body">
-            <h3>東京迪士尼樂園</h3>
-            <span class="spot-loc">📍 千葉 · 浦安市</span>
-            <p>夢想與魔法的王國，七大主題園區，無論大人小孩都能找到歡樂。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.8</span>
-                <span>🕐 整天</span>
-                <span>💰 ¥7,900~</span>
-            </div>
-        </div>
-    </div>
-    <div class="spot-card" data-category="自然">
-        <div class="spot-img" style="background: linear-gradient(135deg, #065f46, #059669);">🌿</div>
-        <div class="spot-body">
-            <h3>北村韓屋村</h3>
-            <span class="spot-loc">📍 首爾 · 鐘路區</span>
-            <p>傳統韓屋聚落，漫步在小巷中感受朝鮮時代的建築之美，每個轉角都是風景。</p>
-            <div class="spot-meta">
-                <span>⭐ 4.5</span>
-                <span>🕐 1.5 小時</span>
-                <span>💰 免費</span>
-            </div>
-        </div>
-    </div>
+<div class="search-bar" style="max-width:560px;margin:0 auto 24px;display:flex;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:40px;overflow:hidden;">
+    <input id="searchInput" type="text" placeholder="搜尋景點名稱或城市…" 
+           style="flex:1;padding:14px 24px;background:transparent;border:none;color:#e2e8f0;font-size:15px;outline:none;"
+           onkeyup="filterSpots()">
+    <button onclick="filterSpots()" style="padding:14px 28px;background:linear-gradient(135deg,#60a5fa,#7c3aed);border:none;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">🔍</button>
+</div>
+
+<div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('全部', this)">全部</button>
+    <button class="filter-btn" onclick="setFilter('歷史文化', this)">🏛️ 歷史文化</button>
+    <button class="filter-btn" onclick="setFilter('美食', this)">🍜 美食</button>
+    <button class="filter-btn" onclick="setFilter('自然', this)">🌿 自然</button>
+    <button class="filter-btn" onclick="setFilter('購物', this)">🛍️ 購物</button>
+    <button class="filter-btn" onclick="setFilter('娛樂', this)">🎢 娛樂</button>
+</div>
+
+<div class="spot-grid" id="spotGrid">
+    <!-- Rendered by JS -->
 </div>
 
 <footer>
     ✈️ 旅伴小幫手 — 探索無限可能
 </footer>
 
+<div class="toast-container" id="toastContainer"></div>
+
 <script>
-// 分類篩選
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelector('.filter-btn.active').classList.remove('active');
-        btn.classList.add('active');
-        const cat = btn.textContent.trim();
-        document.querySelectorAll('.spot-card').forEach(card => {
-            if (cat === '全部' || card.dataset.category === cat.slice(2)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
+// ===== Spot Data =====
+const SPOTS = [
+    { name: '淺草寺', loc: '東京 · 台東區', desc: '東京都內最古老的寺廟，雷門大燈籠是經典地標，仲見世通商店街充滿江戶風情。', cat: '歷史文化', rating: 4.6, time: '1-2 小時', cost: '免費', color: '#1e3a5f,#3b82f6', icon: '🗼', city: '東京' },
+    { name: '景福宮', loc: '首爾 · 鐘路區', desc: '朝鮮王朝的正宮，可體驗韓服穿越時空，守門將換崗儀式是必看亮點。', cat: '歷史文化', rating: 4.5, time: '2-3 小時', cost: '₩3,000', color: '#1a3a2a,#2d6a4f', icon: '🏯', city: '首爾' },
+    { name: '築地市場', loc: '東京 · 中央區', desc: '東京的廚房，新鮮壽司、海鮮丼、玉子燒應有盡有，早餐來一碗海膽丼是奢侈享受。', cat: '美食', rating: 4.4, time: '2 小時', cost: '¥2,000~', color: '#4a1942,#9d174d', icon: '🍜', city: '東京' },
+    { name: '明洞', loc: '首爾 · 中區', desc: '韓國最著名的購物街，美妝、服飾、小吃攤密集，晚上比白天更熱鬧。', cat: '購物', rating: 4.3, time: '2-4 小時', cost: '丰儉由人', color: '#2c1810,#92400e', icon: '🛍️', city: '首爾' },
+    { name: '東京迪士尼樂園', loc: '千葉 · 浦安市', desc: '夢想與魔法的王國，七大主題園區，無論大人小孩都能找到歡樂。', cat: '娛樂', rating: 4.8, time: '整天', cost: '¥7,900~', color: '#2d1b69,#7c3aed', icon: '🎢', city: '東京' },
+    { name: '北村韓屋村', loc: '首爾 · 鐘路區', desc: '傳統韓屋聚落，漫步在小巷中感受朝鮮時代的建築之美，每個轉角都是風景。', cat: '自然', rating: 4.5, time: '1.5 小時', cost: '免費', color: '#065f46,#059669', icon: '🌿', city: '首爾' },
+    { name: '大皇宮', loc: '曼谷 · 拍那空區', desc: '泰國最神聖的皇宮建築群，玉佛寺和翡翠佛是必看國寶級文物。', cat: '歷史文化', rating: 4.6, time: '2-3 小時', cost: '฿500', color: '#7c2d12,#c2410c', icon: '🛕', city: '曼谷' },
+    { name: '洽圖洽週末市集', loc: '曼谷 · 乍都節', desc: '世界最大的週末市集，超過 15,000 個攤位，從服飾到古董應有盡有。', cat: '購物', rating: 4.2, time: '3-5 小時', cost: '丰儉由人', color: '#2c1810,#78350f', icon: '🛍️', city: '曼谷' },
+    { name: '澀谷 SKY', loc: '東京 · 澀谷區', desc: '澀谷上空 230m 的露天展望台，360度全景俯瞰東京天際線，日落時分最浪漫。', cat: '娛樂', rating: 4.7, time: '1-2 小時', cost: '¥2,000', color: '#1e3a5f,#6366f1', icon: '🎡', city: '東京' },
+    { name: '弘大', loc: '首爾 · 麻浦區', desc: '年輕文化的中心，街頭表演、個性小店、咖啡廳林立，週末有自由市場。', cat: '娛樂', rating: 4.4, time: '2-3 小時', cost: '免費', color: '#4a1942,#a21caf', icon: '🎢', city: '首爾' },
+    { name: '水上市場', loc: '曼谷 · 丹嫩莎朵', desc: '搭乘長尾船穿梭在運河上的市集，船家叫賣新鮮水果、小吃和手工藝品。', cat: '美食', rating: 4.3, time: '3 小時', cost: '฿200~', color: '#065f46,#0d9488', icon: '🍜', city: '曼谷' },
+    { name: '伏見稻荷大社', loc: '京都 · 伏見區', desc: '千本鳥居聞名世界，數千座朱紅色鳥居形成隧道，是京都最具代表性的神社。', cat: '歷史文化', rating: 4.7, time: '2 小時', cost: '免費', color: '#7c2d12,#dc2626', icon: '⛩️', city: '京都' },
+    { name: '嵐山竹林', loc: '京都 · 右京區', desc: '參天竹林形成的綠色隧道，風吹竹葉的聲音被選為「日本音風景百選」。', cat: '自然', rating: 4.6, time: '1-2 小時', cost: '免費', color: '#064e3b,#10b981', icon: '🌿', city: '京都' },
+    { name: '道頓堀', loc: '大阪 · 中央區', desc: '大阪最熱鬧的娛樂區，戎橋畔的固力果跑者招牌是經典地標，美食一級戰區。', cat: '美食', rating: 4.5, time: '2-3 小時', cost: '¥2,000~', color: '#2d1b69,#c026d3', icon: '🍜', city: '大阪' },
+    { name: '環球影城', loc: '大阪 · 此花區', desc: '日本三大主題樂園之一，瑪利歐園區和哈利波特魔法世界超高人氣。', cat: '娛樂', rating: 4.7, time: '整天', cost: '¥8,600~', color: '#1e3a5f,#2563eb', icon: '🎢', city: '大阪' },
+    { name: '台北101', loc: '台北 · 信義區', desc: '台灣第一高樓，89樓觀景台 360度俯瞰台北盆地，跨年煙火世界聞名。', cat: '娛樂', rating: 4.5, time: '1-2 小時', cost: 'NT$600', color: '#1e3a5f,#0891b2', icon: '🏙️', city: '台北' },
+    { name: '九份老街', loc: '新北 · 瑞芳區', desc: '山城老街，紅燈籠映照石階，宮崎駿《神隱少女》靈感來源地，夜景迷人。', cat: '歷史文化', rating: 4.4, time: '2-3 小時', cost: '免費', color: '#7c2d12,#ea580c', icon: '🏮', city: '台北' },
+    { name: '士林夜市', loc: '台北 · 士林區', desc: '台灣最具代表性的夜市，豪大大雞排、士林大香腸、生炒花枝羹是必吃名單。', cat: '美食', rating: 4.3, time: '2-3 小時', cost: 'NT$300~', color: '#4a1942,#be123c', icon: '🍜', city: '台北' },
+    { name: '日月潭', loc: '南投 · 魚池鄉', desc: '台灣最大的天然湖泊，湖光山色如詩如畫，騎單車環湖是最經典的玩法。', cat: '自然', rating: 4.6, time: '半天', cost: '免費', color: '#064e3b,#0ea5e9', icon: '🌿', city: '南投' },
+    { name: 'BTS 站周邊', loc: '曼谷 · 各區', desc: '搭 BTS 空鐵就能玩遍曼谷 — Siam 商圈、Chit Lom 四面佛、Thong Lo 文青區。', cat: '購物', rating: 4.3, time: '整天', cost: '丰儉由人', color: '#2c1810,#92400e', icon: '🛍️', city: '曼谷' },
+];
+
+const STORAGE_KEY = 'travel_companion_trips';
+const SELECTED_TRIP_KEY = 'travel_selected_trip';
+
+// ===== State =====
+let currentFilter = '全部';
+let searchQuery = '';
+
+// ===== Init =====
+function init() {
+    // Load trips into selector
+    loadTripSelector();
+    
+    // Check URL for search query
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) {
+        document.getElementById('searchInput').value = q;
+        searchQuery = q;
+    }
+    
+    renderSpots();
+}
+
+function getTrips() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveTrips(t) { localStorage.setItem(STORAGE_KEY, JSON.stringify(t)); }
+
+function loadTripSelector() {
+    const select = document.getElementById('tripSelect');
+    const hint = document.getElementById('noTripsHint');
+    const trips = getTrips();
+    const entries = Object.entries(trips);
+    
+    select.innerHTML = '<option value="">— 請先選擇一個旅程 —</option>';
+    
+    if (entries.length === 0) {
+        hint.style.display = 'inline';
+        return;
+    }
+    hint.style.display = 'none';
+    
+    entries.forEach(([id, trip]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = `✈️ ${trip.name || '未命名'}`;
+        select.appendChild(opt);
     });
-});
+    
+    // Restore selected trip
+    const saved = localStorage.getItem(SELECTED_TRIP_KEY);
+    if (saved && trips[saved]) {
+        select.value = saved;
+    }
+}
+
+function storeSelectedTrip() {
+    const id = document.getElementById('tripSelect').value;
+    if (id) localStorage.setItem(SELECTED_TRIP_KEY, id);
+}
+
+function getSelectedTripId() {
+    return document.getElementById('tripSelect').value;
+}
+
+// ===== Filter =====
+function setFilter(cat, btn) {
+    document.querySelector('.filter-btn.active').classList.remove('active');
+    btn.classList.add('active');
+    currentFilter = cat;
+    renderSpots();
+}
+
+function filterSpots() {
+    searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+    renderSpots();
+}
+
+// ===== Render Spots =====
+function renderSpots() {
+    const grid = document.getElementById('spotGrid');
+    const tripId = getSelectedTripId();
+    const trips = getTrips();
+    const trip = trips[tripId];
+    
+    // Get already-added spot names for this trip
+    const addedSpots = new Set();
+    if (trip && trip.days) {
+        trip.days.forEach(day => {
+            (day.activities || []).forEach(act => {
+                if (act.title) addedSpots.add(act.title);
+            });
+        });
+    }
+    
+    let filtered = SPOTS.filter(spot => {
+        if (currentFilter !== '全部' && spot.cat !== currentFilter) return false;
+        if (searchQuery) {
+            const q = searchQuery;
+            return spot.name.toLowerCase().includes(q) || 
+                   spot.city.toLowerCase().includes(q) || 
+                   spot.loc.toLowerCase().includes(q) ||
+                   spot.desc.toLowerCase().includes(q);
+        }
+        return true;
+    });
+    
+    if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#64748b;">
+            <p style="font-size:48px;margin-bottom:16px;">🔍</p>
+            <p style="font-size:18px;">沒有符合條件的景點</p>
+            <p style="font-size:14px;margin-top:8px;">試試其他關鍵字或分類</p>
+        </div>`;
+        return;
+    }
+    
+    let html = '';
+    filtered.forEach(spot => {
+        const isAdded = addedSpots.has(spot.name);
+        html += `
+        <div class="spot-card ${isAdded ? 'added' : ''}">
+            <div class="spot-img" style="background:linear-gradient(135deg, ${spot.color});">
+                ${spot.icon}
+                ${isAdded ? '<span class="added-badge">✅ 已加入</span>' : ''}
+                ${tripId && !isAdded ? `<button class="add-spot-btn" onclick="addToTrip('${spot.name}', '${spot.loc}', '${spot.desc.replace(/'/g, "\\'")}')" title="加入行程">+</button>` : ''}
+            </div>
+            <div class="spot-body">
+                <h3>${spot.name}</h3>
+                <span class="spot-loc">📍 ${spot.loc}</span>
+                <p>${spot.desc}</p>
+                <div class="spot-meta">
+                    <span>⭐ ${spot.rating}</span>
+                    <span>🕐 ${spot.time}</span>
+                    <span>💰 ${spot.cost}</span>
+                </div>
+                <span class="tag" style="display:inline-block;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:12px;background:rgba(96,165,250,0.15);color:#60a5fa;">🏷️ ${spot.cat}</span>
+            </div>
+        </div>`;
+    });
+    
+    grid.innerHTML = html;
+}
+
+// ===== Add to Trip =====
+function addToTrip(name, loc, desc) {
+    const tripId = getSelectedTripId();
+    if (!tripId) {
+        showToast('⚠️ 請先在上方選擇一個旅程', 'error');
+        return;
+    }
+    
+    const trips = getTrips();
+    const trip = trips[tripId];
+    if (!trip) return;
+    
+    // Add to the first day that has activities, or the last day, or create a new day
+    if (!trip.days || trip.days.length === 0) {
+        trip.days = [{ date: trip.startDate || '', activities: [] }];
+    }
+    
+    // Check if already added
+    const alreadyAdded = trip.days.some(day => 
+        (day.activities || []).some(act => act.title === name)
+    );
+    if (alreadyAdded) {
+        showToast(`⚠️ 「${name}」已在行程中`, 'error');
+        return;
+    }
+    
+    // Find the best day to add to (last day with activities, or last day)
+    let targetDay = trip.days.length - 1;
+    for (let i = trip.days.length - 1; i >= 0; i--) {
+        if (trip.days[i].activities && trip.days[i].activities.length > 0) {
+            targetDay = i;
+            break;
+        }
+    }
+    
+    if (!trip.days[targetDay].activities) trip.days[targetDay].activities = [];
+    
+    trip.days[targetDay].activities.push({
+        id: 'act_' + Date.now(),
+        time: '09:00',
+        title: name,
+        description: `${desc}（${loc}）`
+    });
+    
+    trip.updatedAt = new Date().toISOString();
+    saveTrips(trips);
+    
+    // Update the badge
+    renderSpots();
+    showToast(`✅ 「${name}」已加入行程！`, 'success');
+}
+
+// ===== Toast =====
+function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'success' ? ' toast-success' : type === 'error' ? ' toast-error' : '');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// Init on load
+init();
 </script>
 </body>
 </html>

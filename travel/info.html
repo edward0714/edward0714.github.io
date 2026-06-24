@@ -5,12 +5,122 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>實用資訊 — 旅伴小幫手</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .currency-converter {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+        }
+        .converter-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .converter-card h3 { font-size: 20px; margin-bottom: 16px; }
+        .conv-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .conv-row label { color: #94a3b8; font-size: 13px; min-width: 60px; }
+        .conv-row input, .conv-row select {
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-size: 15px;
+            outline: none;
+        }
+        .conv-row input:focus, .conv-row select:focus { border-color: #60a5fa; }
+        .conv-row input[type="number"] { width: 160px; }
+        .conv-row select { width: 140px; }
+        .conv-result {
+            font-size: 24px;
+            font-weight: 700;
+            color: #60a5fa;
+            padding: 12px 0;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            margin-top: 8px;
+        }
+        .conv-row select option { background: #1e293b; color: #e2e8f0; }
+        .packing-checklist {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            padding: 0 20px;
+        }
+        .checklist-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .checklist-card h3 { font-size: 20px; margin-bottom: 16px; }
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        .checklist-item:hover { background: rgba(96,165,250,0.05); }
+        .checklist-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #60a5fa;
+            cursor: pointer;
+        }
+        .checklist-item.checked { color: #64748b; text-decoration: line-through; }
+        .checklist-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #60a5fa, #7c3aed);
+            border-radius: 3px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .progress-text { color: #94a3b8; font-size: 13px; white-space: nowrap; }
+        .checklist-reset {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: transparent;
+            color: #94a3b8;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .checklist-reset:hover { border-color: #60a5fa; color: #60a5fa; }
+    </style>
 </head>
 <body>
-
 <div class="bg-grid"></div>
 <div class="navbar">
-    <div class="logo">✈️ 旅伴小幫手</div>
+    <div class="logo" onclick="location.href='index.html'">✈️ 旅伴小幫手</div>
     <nav>
         <a href="index.html">首頁</a>
         <a href="explore.html">探索景點</a>
@@ -21,9 +131,46 @@
 
 <section class="page-hero">
     <h1>🌍 實用資訊</h1>
-    <p>出國前必讀 — 簽證、天氣、電壓、文化一次掌握</p>
+    <p>出國前必讀 — 簽證、天氣、貨幣換算一次掌握</p>
 </section>
 
+<!-- 匯率換算器 -->
+<div class="currency-converter">
+    <div class="converter-card">
+        <h3>💱 貨幣換算器</h3>
+        <div class="conv-row">
+            <label>金額</label>
+            <input type="number" id="convAmount" value="1000" oninput="convertCurrency()">
+            <select id="convFrom" onchange="convertCurrency()">
+                <option value="TWD">TWD 新台幣</option>
+                <option value="JPY">JPY 日圓</option>
+                <option value="KRW">KRW 韓元</option>
+                <option value="THB">THB 泰銖</option>
+                <option value="USD">USD 美金</option>
+                <option value="EUR">EUR 歐元</option>
+                <option value="HKD">HKD 港幣</option>
+                <option value="SGD">SGD 新加坡幣</option>
+            </select>
+            <span style="color:#64748b;">→</span>
+            <select id="convTo" onchange="convertCurrency()">
+                <option value="TWD">TWD 新台幣</option>
+                <option value="JPY" selected>JPY 日圓</option>
+                <option value="KRW">KRW 韓元</option>
+                <option value="THB">THB 泰銖</option>
+                <option value="USD">USD 美金</option>
+                <option value="EUR">EUR 歐元</option>
+                <option value="HKD">HKD 港幣</option>
+                <option value="SGD">SGD 新加坡幣</option>
+            </select>
+        </div>
+        <div class="conv-result" id="convResult">≈ 4,500 JPY</div>
+        <div style="color:#64748b;font-size:12px;margin-top:8px;">
+            📌 參考匯率（約略值）: 1 TWD ≈ 4.5 JPY · 1 TWD ≈ 40 KRW · 1 TWD ≈ 1.1 THB · 1 USD ≈ 32 TWD
+        </div>
+    </div>
+</div>
+
+<!-- 各國資訊 -->
 <div class="info-grid">
     <div class="info-card">
         <h3>🇯🇵 日本</h3>
@@ -32,7 +179,7 @@
             <li><strong>貨幣：</strong>日圓 (JPY) — 1 TWD ≈ 4.5 JPY</li>
             <li><strong>電壓：</strong>100V / 雙平腳插頭</li>
             <li><strong>語言：</strong>日語，觀光區英文可通</li>
-            <li><strong>時差：</strong>UTC+9 (快台灣 1 小時)</li>
+            <li><strong>時差：</strong>UTC+9（快台灣 1 小時）</li>
             <li><strong>交通卡：</strong>Suica / PASMO / IC卡</li>
             <li><strong>網路：</strong>WiFi 機 / eSIM / 預付卡</li>
             <li><strong>小費：</strong>不必要</li>
@@ -41,11 +188,11 @@
     <div class="info-card">
         <h3>🇰🇷 韓國</h3>
         <ul>
-            <li><strong>簽證：</strong>台灣護照免簽 90 天 (K-ETA 已取消)</li>
+            <li><strong>簽證：</strong>台灣護照免簽 90 天（K-ETA 已取消）</li>
             <li><strong>貨幣：</strong>韓元 (KRW) — 1 TWD ≈ 40 KRW</li>
             <li><strong>電壓：</strong>220V / 圓腳插頭 (C/F)</li>
             <li><strong>語言：</strong>韓語，主要車站有中文標示</li>
-            <li><strong>時差：</strong>UTC+9 (快台灣 1 小時)</li>
+            <li><strong>時差：</strong>UTC+9（快台灣 1 小時）</li>
             <li><strong>交通卡：</strong>T-money / Cashbee</li>
             <li><strong>網路：</strong>WiFi 蛋 / SIM 卡 / eSIM</li>
             <li><strong>小費：</strong>不必要</li>
@@ -58,7 +205,7 @@
             <li><strong>貨幣：</strong>泰銖 (THB) — 1 TWD ≈ 1.1 THB</li>
             <li><strong>電壓：</strong>220V / 雙扁腳+圓腳 (A/B/C)</li>
             <li><strong>語言：</strong>泰語，觀光區英文可通</li>
-            <li><strong>時差：</strong>UTC+7 (慢台灣 1 小時)</li>
+            <li><strong>時差：</strong>UTC+7（慢台灣 1 小時）</li>
             <li><strong>交通卡：</strong>Rabbit Card / BTS 儲值卡</li>
             <li><strong>網路：</strong>Sim 卡 (7-11 有賣) / eSIM</li>
             <li><strong>小費：</strong>床頭 20-50 THB</li>
@@ -67,7 +214,7 @@
 </div>
 
 <!-- 天氣概況 -->
-<h2 class="section-title" style="max-width: 1100px; margin: 40px auto 20px; padding: 0 20px;">🌤️ 各城市每月平均氣溫</h2>
+<h2 class="section-title" style="max-width:1100px;margin:40px auto 20px;padding:0 20px;">🌤️ 各城市每月平均氣溫 (°C)</h2>
 <div class="weather-table-wrap">
 <table class="weather-table">
     <thead>
@@ -76,18 +223,111 @@
         </tr>
     </thead>
     <tbody>
-        <tr><td>東京</td><td>6°C</td><td>14°C</td><td>27°C</td><td>18°C</td></tr>
-        <tr><td>大阪</td><td>6°C</td><td>15°C</td><td>28°C</td><td>19°C</td></tr>
-        <tr><td>首爾</td><td>-2°C</td><td>12°C</td><td>26°C</td><td>15°C</td></tr>
-        <tr><td>曼谷</td><td>27°C</td><td>31°C</td><td>29°C</td><td>28°C</td></tr>
-        <tr><td>台北</td><td>16°C</td><td>23°C</td><td>30°C</td><td>24°C</td></tr>
+        <tr><td><strong>東京</strong></td><td>6°C</td><td>14°C</td><td>27°C</td><td>18°C</td></tr>
+        <tr><td><strong>大阪</strong></td><td>6°C</td><td>15°C</td><td>28°C</td><td>19°C</td></tr>
+        <tr><td><strong>首爾</strong></td><td>-2°C</td><td>12°C</td><td>26°C</td><td>15°C</td></tr>
+        <tr><td><strong>曼谷</strong></td><td>27°C</td><td>31°C</td><td>29°C</td><td>28°C</td></tr>
+        <tr><td><strong>台北</strong></td><td>16°C</td><td>23°C</td><td>30°C</td><td>24°C</td></tr>
     </tbody>
 </table>
+</div>
+
+<!-- 行李檢查表 -->
+<div class="packing-checklist">
+    <div class="checklist-card">
+        <h3>🧳 行李檢查清單</h3>
+        <div class="checklist-progress">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <span class="progress-text" id="progressText">0%</span>
+            <button class="checklist-reset" onclick="resetChecklist()">↺ 重設</button>
+        </div>
+        <div class="checklist-grid" id="checklistGrid">
+            <!-- Items rendered by JS -->
+        </div>
+    </div>
 </div>
 
 <footer>
     ✈️ 旅伴小幫手 — 旅行無憂，出發更從容
 </footer>
 
+<script>
+// ===== Currency Converter =====
+const EXCHANGE_RATES = {
+    'TWD': 1, 'JPY': 4.5, 'KRW': 40, 'THB': 1.1, 
+    'USD': 0.03125, 'EUR': 0.029, 'HKD': 0.244, 'SGD': 0.042
+};
+
+function convertCurrency() {
+    const amount = parseFloat(document.getElementById('convAmount').value) || 0;
+    const from = document.getElementById('convFrom').value;
+    const to = document.getElementById('convTo').value;
+    
+    // Convert via TWD
+    const inTWD = amount / EXCHANGE_RATES[from];
+    const result = inTWD * EXCHANGE_RATES[to];
+    
+    document.getElementById('convResult').textContent = 
+        `≈ ${result.toLocaleString('zh-TW', { maximumFractionDigits: 0 })} ${to}`;
+}
+
+// ===== Packing Checklist =====
+const CHECKLIST_KEY = 'travel_packing_checklist';
+const DEFAULT_ITEMS = [
+    '🛂 護照 / 身分證', '✈️ 機票 / 訂位記錄', '🏨 住宿訂單', '💳 信用卡 / 現金',
+    '📱 手機 / 充電器', '🔌 轉接頭', '🔋 行動電源', '📶 eSIM / 網路方案',
+    '👕 衣物（依天數）', '🩲 內衣褲', '🧦 襪子', '👟 舒適步行鞋',
+    '🧴 防曬乳', '🦟 防蚊液', '💊 常備藥品', '😷 口罩',
+    '☂️ 摺疊傘', '🧳 行李秤', '🗣️ 翻譯App', '📸 相機 / GoPro'
+];
+
+function getChecklist() {
+    try { return JSON.parse(localStorage.getItem(CHECKLIST_KEY)); } catch { return null; }
+}
+
+function initChecklist() {
+    let items = getChecklist();
+    if (!items || items.length !== DEFAULT_ITEMS.length) {
+        items = DEFAULT_ITEMS.map(text => ({ text, checked: false }));
+        localStorage.setItem(CHECKLIST_KEY, JSON.stringify(items));
+    }
+    renderChecklist(items);
+}
+
+function renderChecklist(items) {
+    const grid = document.getElementById('checklistGrid');
+    const checked = items.filter(i => i.checked).length;
+    const total = items.length;
+    const pct = Math.round((checked / total) * 100);
+    
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${checked}/${total} (${pct}%)`;
+    
+    grid.innerHTML = items.map((item, i) => `
+        <div class="checklist-item ${item.checked ? 'checked' : ''}" onclick="toggleChecklistItem(${i})">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleChecklistItem(${i})">
+            <span>${item.text}</span>
+        </div>
+    `).join('');
+}
+
+function toggleChecklistItem(index) {
+    const items = getChecklist() || DEFAULT_ITEMS.map(t => ({ text: t, checked: false }));
+    items[index].checked = !items[index].checked;
+    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(items));
+    renderChecklist(items);
+}
+
+function resetChecklist() {
+    if (!confirm('確定重設所有項目？')) return;
+    const items = DEFAULT_ITEMS.map(text => ({ text, checked: false }));
+    localStorage.setItem(CHECKLIST_KEY, JSON.stringify(items));
+    renderChecklist(items);
+}
+
+// ===== Init =====
+convertCurrency();
+initChecklist();
+</script>
 </body>
 </html>

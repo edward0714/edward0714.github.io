@@ -5,12 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>行程規劃 — 旅伴小幫手</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .no-trip { text-align: center; padding: 80px 20px; }
+        .no-trip h2 { font-size: 28px; margin-bottom: 12px; color: #94a3b8; }
+        .no-trip p { color: #64748b; margin-bottom: 24px; }
+        .no-trip a { color: #60a5fa; text-decoration: none; font-weight: 600; }
+        .no-trip a:hover { text-decoration: underline; }
+        .empty-message { color: #64748b; font-size: 13px; text-align: center; padding: 20px; }
+    </style>
 </head>
 <body>
-
 <div class="bg-grid"></div>
 <div class="navbar">
-    <div class="logo">✈️ 旅伴小幫手</div>
+    <div class="logo" onclick="location.href='index.html'">✈️ 旅伴小幫手</div>
     <nav>
         <a href="index.html">首頁</a>
         <a href="explore.html">探索景點</a>
@@ -19,132 +26,442 @@
     </nav>
 </div>
 
-<section class="page-hero">
-    <h1>📋 行程規劃</h1>
-    <p>自由組合每天的景點與活動，打造專屬旅程</p>
-</section>
-
-<div class="planner-layout">
-    <!-- 左側：行程列表 -->
-    <div class="planner-main">
-        <div class="day-card">
-            <div class="day-header">
-                <span class="day-num">Day 1</span>
-                <input class="day-date" type="date" value="2026-07-01">
-                <span class="day-weather">☀️ 28°C</span>
-            </div>
-            <div class="day-items">
-                <div class="item">
-                    <span class="item-time">09:00</span>
-                    <div class="item-content">
-                        <strong>抵達成田機場</strong>
-                        <p>搭 Skyliner 到上野駅 (約 41 分鐘)</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">12:00</span>
-                    <div class="item-content">
-                        <strong>午餐 — 阿美橫丁</strong>
-                        <p>品嚐在地串燒、海鮮丼</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">14:00</span>
-                    <div class="item-content">
-                        <strong>淺草寺 & 仲見世通</strong>
-                        <p>雷門拍照、買人形燒、抽籤</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">18:00</span>
-                    <div class="item-content">
-                        <strong>晴空塔夜景</strong>
-                        <p>登上 350m 展望台看東京日落</p>
-                    </div>
-                </div>
-            </div>
-            <div class="day-actions">
-                <button class="btn-add">+ 新增行程</button>
-            </div>
-        </div>
-
-        <div class="day-card">
-            <div class="day-header">
-                <span class="day-num">Day 2</span>
-                <input class="day-date" type="date" value="2026-07-02">
-                <span class="day-weather">☀️ 30°C</span>
-            </div>
-            <div class="day-items">
-                <div class="item">
-                    <span class="item-time">08:30</span>
-                    <div class="item-content">
-                        <strong>築地市場早餐</strong>
-                        <p>排隊名店壽司大 / 大和壽司</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">10:30</span>
-                    <div class="item-content">
-                        <strong>澀谷 SKY 展望台</strong>
-                        <p>俯瞰澀谷十字路口，超美天臺</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">13:00</span>
-                    <div class="item-content">
-                        <strong>原宿 · 竹下通</strong>
-                        <p>可麗餅、古著、扭蛋</p>
-                    </div>
-                </div>
-                <div class="item">
-                    <span class="item-time">17:00</span>
-                    <div class="item-content">
-                        <strong>新宿御苑</strong>
-                        <p>散步賞景，日本庭園與法式庭園並存</p>
-                    </div>
-                </div>
-            </div>
-            <div class="day-actions">
-                <button class="btn-add">+ 新增行程</button>
-            </div>
-        </div>
+<div id="app">
+    <!-- Loading state / No trip -->
+    <div id="noTrip" class="no-trip" style="display:none;">
+        <h2>📋 尚未選擇旅程</h2>
+        <p>請先從首頁建立或選擇一個旅程計劃</p>
+        <a href="index.html">→ 前往旅程儀表板</a>
     </div>
 
-    <!-- 右側：預算面板 -->
-    <div class="budget-panel">
-        <h3>💰 預算概覽</h3>
-        <div class="budget-item">
-            <span>✈️ 機票</span>
-            <span class="budget-val">NT$ 15,000</span>
+    <!-- Main planner -->
+    <div id="plannerView" style="display:none;">
+        <section class="page-hero" style="padding-bottom:20px;">
+            <h1>📋 行程規劃</h1>
+            <p>自由編輯每天的行程，所有修改自動儲存在瀏覽器中</p>
+        </section>
+
+        <div class="planner-toolbar" style="max-width:1100px;margin:0 auto;padding:0 20px;">
+            <input type="text" id="tripNameInput" placeholder="行程名稱（例如：東京七日遊）" 
+                   onchange="autoSave()" onkeyup="autoSave()">
+            <div class="trip-meta-input">
+                <label>從</label>
+                <input type="date" id="startDateInput" onchange="syncDaysFromDates()">
+                <label>到</label>
+                <input type="date" id="endDateInput" onchange="syncDaysFromDates()">
+            </div>
         </div>
-        <div class="budget-item">
-            <span>🏨 住宿 (3晚)</span>
-            <span class="budget-val">NT$ 9,000</span>
+
+        <div class="planner-layout">
+            <div class="planner-main" id="dayContainer">
+                <!-- Day cards rendered by JS -->
+            </div>
+
+            <div class="budget-panel">
+                <h3>💰 預算</h3>
+                <div class="currency-hint">金額單位：NT$</div>
+                <div id="budgetList">
+                    <div class="budget-item">
+                        <span class="budget-label">✈️ 機票</span>
+                        <input class="budget-val-input" type="number" data-key="flights" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">🏨 住宿</span>
+                        <input class="budget-val-input" type="number" data-key="accommodation" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">🍜 餐飲</span>
+                        <input class="budget-val-input" type="number" data-key="food" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">🚃 交通</span>
+                        <input class="budget-val-input" type="number" data-key="transport" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">🎫 門票/活動</span>
+                        <input class="budget-val-input" type="number" data-key="tickets" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">🛍️ 購物</span>
+                        <input class="budget-val-input" type="number" data-key="shopping" value="0" onchange="updateBudget()">
+                    </div>
+                    <div class="budget-item">
+                        <span class="budget-label">📦 其他</span>
+                        <input class="budget-val-input" type="number" data-key="other" value="0" onchange="updateBudget()">
+                    </div>
+                </div>
+                <div class="budget-total">
+                    <span>總計</span>
+                    <span id="budgetTotal">NT$ 0</span>
+                </div>
+                <button class="btn-save" onclick="saveTrip()">💾 儲存行程</button>
+                <button class="btn-share" onclick="shareTrip()">📤 分享給旅伴</button>
+            </div>
         </div>
-        <div class="budget-item">
-            <span>🍜 餐飲</span>
-            <span class="budget-val">NT$ 6,000</span>
-        </div>
-        <div class="budget-item">
-            <span>🚃 交通</span>
-            <span class="budget-val">NT$ 3,500</span>
-        </div>
-        <div class="budget-item">
-            <span>🎫 門票</span>
-            <span class="budget-val">NT$ 3,000</span>
-        </div>
-        <div class="budget-total">
-            <span>總計</span>
-            <span class="budget-val">NT$ 36,500</span>
-        </div>
-        <button class="btn-share">📤 分享行程</button>
-        <button class="btn-export">📥 匯出 PDF</button>
     </div>
 </div>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <footer>
     ✈️ 旅伴小幫手 — 你的行程，由你定義
 </footer>
 
+<script>
+// ===== Data Model =====
+const STORAGE_KEY = 'travel_companion_trips';
+
+function getTrips() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } 
+    catch { return {}; }
+}
+function saveTrips(trips) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
+}
+
+// Get trip ID from URL params
+function getTripId() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tripId');
+}
+
+let currentTrip = null;
+let currentTripId = null;
+let autoSaveTimer = null;
+
+// ===== Init =====
+function init() {
+    const tripId = getTripId();
+    if (!tripId) {
+        document.getElementById('noTrip').style.display = 'block';
+        document.getElementById('plannerView').style.display = 'none';
+        return;
+    }
+    const trips = getTrips();
+    if (!trips[tripId]) {
+        document.getElementById('noTrip').style.display = 'block';
+        document.getElementById('plannerView').style.display = 'none';
+        return;
+    }
+    currentTripId = tripId;
+    currentTrip = trips[tripId];
+    document.getElementById('noTrip').style.display = 'none';
+    document.getElementById('plannerView').style.display = 'block';
+    render();
+}
+
+// ===== Render =====
+function render() {
+    if (!currentTrip) return;
+    document.getElementById('tripNameInput').value = currentTrip.name || '';
+    document.getElementById('startDateInput').value = currentTrip.startDate || '';
+    document.getElementById('endDateInput').value = currentTrip.endDate || '';
+    
+    // Budget
+    const budget = currentTrip.budget || {};
+    document.querySelectorAll('.budget-val-input').forEach(inp => {
+        inp.value = budget[inp.dataset.key] || 0;
+    });
+    updateBudgetSum();
+    
+    // Days
+    renderDays();
+}
+
+function renderDays() {
+    const container = document.getElementById('dayContainer');
+    if (!currentTrip.days || currentTrip.days.length === 0) {
+        container.innerHTML = `<p class="empty-message">暫無行程，點擊下方按鈕新增第一天 🗓️</p>
+            <div style="text-align:center;margin-top:12px;">
+                <button class="btn-add" onclick="addDay()">+ 新增第一天</button>
+            </div>`;
+        return;
+    }
+    
+    let html = '';
+    currentTrip.days.forEach((day, di) => {
+        const dateStr = day.date || '';
+        html += `
+        <div class="day-card" data-day-index="${di}">
+            <div class="day-header">
+                <span class="day-num">Day ${di + 1}</span>
+                <input class="day-date" type="date" value="${dateStr}" 
+                       onchange="updateDayDate(${di}, this.value)">
+                <div class="day-actions-right">
+                    <button class="add-item-btn" onclick="addActivity(${di})">+ 活動</button>
+                    ${currentTrip.days.length > 1 ? `<button class="del-day" onclick="removeDay(${di})">🗑️</button>` : ''}
+                </div>
+            </div>
+            <div class="day-items">
+                ${(day.activities || []).map((act, ai) => `
+                <div class="item" data-activity-index="${ai}">
+                    <div class="item-time">
+                        <input type="time" value="${act.time || '09:00'}" 
+                               onchange="updateActivity(${di}, ${ai}, 'time', this.value)">
+                    </div>
+                    <div class="item-content">
+                        <input class="item-title-input" type="text" value="${escapeHtml(act.title || '')}" 
+                               placeholder="活動名稱" onchange="updateActivity(${di}, ${ai}, 'title', this.value)" onkeyup="autoSave()">
+                        <textarea class="item-desc-input" rows="1" placeholder="備註 / 描述" 
+                                  onchange="updateActivity(${di}, ${ai}, 'description', this.value)" onkeyup="autoSave()">${escapeHtml(act.description || '')}</textarea>
+                    </div>
+                    <div class="item-actions">
+                        ${ai > 0 ? `<button class="move-up" onclick="moveActivity(${di}, ${ai}, -1)" title="上移">↑</button>` : ''}
+                        ${ai < (day.activities.length - 1) ? `<button class="move-down" onclick="moveActivity(${di}, ${ai}, 1)" title="下移">↓</button>` : ''}
+                        <button class="del-item" onclick="removeActivity(${di}, ${ai})" title="刪除">✕</button>
+                    </div>
+                </div>`).join('')}
+            </div>
+            <div class="day-actions">
+                <button class="btn-add" onclick="addActivity(${di})">+ 新增行程</button>
+            </div>
+        </div>`;
+    });
+    
+    // Add day button after all day cards
+    html += `<div style="text-align:center;padding:8px 0;">
+        <button class="btn-add" onclick="addDay()" style="padding:12px 32px;">+ 新增天數</button>
+    </div>`;
+    
+    container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ===== Day Operations =====
+function addDay() {
+    if (!currentTrip) return;
+    // Determine date for the new day
+    let newDate = '';
+    if (currentTrip.startDate && currentTrip.days.length > 0) {
+        const lastDate = currentTrip.days[currentTrip.days.length - 1].date;
+        if (lastDate) {
+            const d = new Date(lastDate);
+            d.setDate(d.getDate() + 1);
+            newDate = d.toISOString().split('T')[0];
+        }
+    } else if (currentTrip.startDate) {
+        newDate = currentTrip.startDate;
+    }
+    if (!currentTrip.days) currentTrip.days = [];
+    currentTrip.days.push({ date: newDate, activities: [] });
+    renderDays();
+    autoSave();
+    showToast('已新增一天 🗓️');
+}
+
+function removeDay(index) {
+    if (!currentTrip || currentTrip.days.length <= 1) return;
+    if (!confirm(`確定刪除 Day ${index + 1}？該天的所有行程將一併移除。`)) return;
+    currentTrip.days.splice(index, 1);
+    renderDays();
+    autoSave();
+}
+
+function updateDayDate(index, value) {
+    if (!currentTrip) return;
+    currentTrip.days[index].date = value;
+    autoSave();
+}
+
+// ===== Activity Operations =====
+function addActivity(dayIndex) {
+    if (!currentTrip) return;
+    if (!currentTrip.days[dayIndex].activities) currentTrip.days[dayIndex].activities = [];
+    currentTrip.days[dayIndex].activities.push({
+        id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        time: '09:00',
+        title: '',
+        description: ''
+    });
+    renderDays();
+    autoSave();
+}
+
+function updateActivity(dayIndex, actIndex, field, value) {
+    if (!currentTrip) return;
+    currentTrip.days[dayIndex].activities[actIndex][field] = value;
+    autoSave();
+}
+
+function removeActivity(dayIndex, actIndex) {
+    if (!currentTrip) return;
+    if (!confirm('確定刪除此行程？')) return;
+    currentTrip.days[dayIndex].activities.splice(actIndex, 1);
+    renderDays();
+    autoSave();
+}
+
+function moveActivity(dayIndex, actIndex, direction) {
+    if (!currentTrip) return;
+    const acts = currentTrip.days[dayIndex].activities;
+    const newIndex = actIndex + direction;
+    if (newIndex < 0 || newIndex >= acts.length) return;
+    [acts[actIndex], acts[newIndex]] = [acts[newIndex], acts[actIndex]];
+    renderDays();
+    autoSave();
+}
+
+// ===== Date Sync =====
+function syncDaysFromDates() {
+    if (!currentTrip) return;
+    const start = document.getElementById('startDateInput').value;
+    const end = document.getElementById('endDateInput').value;
+    currentTrip.startDate = start;
+    currentTrip.endDate = end;
+    
+    if (start && end) {
+        const startD = new Date(start);
+        const endD = new Date(end);
+        const diffDays = Math.floor((endD - startD) / (1000 * 60 * 60 * 24)) + 1;
+        if (diffDays > 0 && diffDays !== currentTrip.days.length) {
+            // Adjust days count
+            while (currentTrip.days.length < diffDays) {
+                const lastIdx = currentTrip.days.length - 1;
+                let nextDate = '';
+                if (lastIdx >= 0 && currentTrip.days[lastIdx].date) {
+                    const d = new Date(currentTrip.days[lastIdx].date);
+                    d.setDate(d.getDate() + 1);
+                    nextDate = d.toISOString().split('T')[0];
+                } else {
+                    const d = new Date(start);
+                    d.setDate(d.getDate() + currentTrip.days.length);
+                    nextDate = d.toISOString().split('T')[0];
+                }
+                currentTrip.days.push({ date: nextDate, activities: [] });
+            }
+            while (currentTrip.days.length > diffDays) {
+                currentTrip.days.pop();
+            }
+            // Update dates for each day
+            currentTrip.days.forEach((day, i) => {
+                const d = new Date(start);
+                d.setDate(d.getDate() + i);
+                day.date = d.toISOString().split('T')[0];
+            });
+        } else if (currentTrip.days.length === 0 && diffDays > 0) {
+            for (let i = 0; i < diffDays; i++) {
+                const d = new Date(start);
+                d.setDate(d.getDate() + i);
+                currentTrip.days.push({ date: d.toISOString().split('T')[0], activities: [] });
+            }
+        }
+    }
+    renderDays();
+    autoSave();
+}
+
+// ===== Budget =====
+function updateBudget() {
+    if (!currentTrip) return;
+    if (!currentTrip.budget) currentTrip.budget = {};
+    document.querySelectorAll('.budget-val-input').forEach(inp => {
+        currentTrip.budget[inp.dataset.key] = parseInt(inp.value) || 0;
+    });
+    updateBudgetSum();
+    autoSave();
+}
+
+function updateBudgetSum() {
+    let total = 0;
+    document.querySelectorAll('.budget-val-input').forEach(inp => {
+        total += parseInt(inp.value) || 0;
+    });
+    document.getElementById('budgetTotal').textContent = 'NT$ ' + total.toLocaleString();
+}
+
+// ===== Save / Load =====
+function autoSave() {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => { saveTrip(true); }, 800);
+}
+
+function saveTrip(silent) {
+    if (!currentTrip || !currentTripId) return;
+    // Collect trip name and dates from inputs
+    currentTrip.name = document.getElementById('tripNameInput').value || '未命名行程';
+    currentTrip.startDate = document.getElementById('startDateInput').value || '';
+    currentTrip.endDate = document.getElementById('endDateInput').value || '';
+    currentTrip.updatedAt = new Date().toISOString();
+    if (!currentTrip.createdAt) currentTrip.createdAt = currentTrip.updatedAt;
+    
+    const trips = getTrips();
+    trips[currentTripId] = currentTrip;
+    saveTrips(trips);
+    if (!silent) showToast('✅ 行程已儲存！', 'success');
+}
+
+// ===== Share =====
+function shareTrip() {
+    if (!currentTrip) return;
+    const name = currentTrip.name || '未命名行程';
+    let text = `✈️ ${name}\n`;
+    text += `📅 ${currentTrip.startDate || '?'} → ${currentTrip.endDate || '?'}\n`;
+    text += `━`.repeat(20) + '\n\n';
+    
+    (currentTrip.days || []).forEach((day, i) => {
+        text += `📌 Day ${i + 1}`;
+        if (day.date) text += ` — ${day.date}`;
+        text += '\n';
+        (day.activities || []).forEach(act => {
+            text += `  ${act.time || '??:??'} ${act.title || '（無標題）'}`;
+            if (act.description) text += ` — ${act.description}`;
+            text += '\n';
+        });
+        text += '\n';
+    });
+    
+    // Budget
+    if (currentTrip.budget) {
+        text += `💰 預算概覽\n`;
+        const labels = { flights: '✈️ 機票', accommodation: '🏨 住宿', food: '🍜 餐飲', 
+                        transport: '🚃 交通', tickets: '🎫 門票', shopping: '🛍️ 購物', other: '📦 其他' };
+        let total = 0;
+        Object.entries(currentTrip.budget).forEach(([k, v]) => {
+            if (v > 0) { text += `  ${labels[k] || k}: NT$${v.toLocaleString()}\n`; total += v; }
+        });
+        text += `  ────────\n  **總計: NT$${total.toLocaleString()}**\n`;
+    }
+    
+    text += `\n━`.repeat(20);
+    text += `\n📱 由 旅伴小幫手 製作`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 行程已複製到剪貼簿！貼給旅伴吧', 'success');
+    }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        showToast('📋 行程已複製！', 'success');
+    });
+}
+
+// ===== Toast =====
+function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'success' ? ' toast-success' : '');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, 3000);
+}
+
+// ===== Search bar on index =====
+function onSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (q) location.href = 'explore.html?q=' + encodeURIComponent(q);
+}
+
+// ===== Init on load =====
+init();
+</script>
 </body>
 </html>
