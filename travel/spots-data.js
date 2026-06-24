@@ -1,5 +1,5 @@
-// Auto-generated spots data. DO NOT EDIT directly.
-// Edit spots-data.json and regenerate, or update via cron.
+// Auto-generated spots data. Last updated: 2026-06-24 12:30 UTC
+// Source: spots-data.json — edit there and regenerate.
 const SPOTS = [
   {
     "name": "淺草寺",
@@ -1150,3 +1150,5 @@ const SPOTS = [
     "lng": 121.852764
   }
 ];
+
+// (c) 旅伴小幫手 — 資料每週自動更新
