@@ -2,21 +2,32 @@
  * 工作小秘書 — API Client
  * 前端與後端 API 的通訊層
  * 
- * 使用方式：修改 API_BASE_URL 為後端伺服器實際位址
+ * 自動偵測：
+ * - 從 Flask 直接提供時（同源）→ 使用相對路徑
+ * - 從 GitHub Pages（edward0714.github.io）→ 透過 Tailscale
+ * - 從 localhost 開發 → 使用 localhost:5000
  */
 
 const API_BASE_URL = (function() {
-    // 部署到 GitHub Pages 時，改成後端實際位址
-    // 例如：'http://你的伺服器IP:5000'
-    // 開發時：'http://localhost:5000'
     const host = window.location.hostname;
-    // 如果在 localhost 開發，自動使用 localhost
+    const port = window.location.port;
+
+    // 開發模式：從 localhost 直接連
     if (host === 'localhost' || host === '127.0.0.1') {
-        return 'http://localhost:5000';
+        if (port === '5500' || port === '3000') {
+            return 'http://localhost:5000';  // 開發伺服器在前端 port，後端在 5000
+        }
+        return '';  // Flask 直接提供，同源
     }
-    // 如果在 GitHub Pages 上，使用你的後端伺服器
-    // ⚠️ 請修改為你的實際後端位址
-    return 'http://172.16.1.3:5000';  // ← 改成你的後端實際可存取位址
+
+    // Flask 直接提供（Tailscale IP 或 Synology DDNS）
+    if (host.includes('100.') || host.includes('synology.me') || port === '5000' || port === '8080') {
+        return '';  // 同源，不需要前綴
+    }
+
+    // GitHub Pages → 透過 Tailscale 存取 Hermes 後端
+    // ⚠️ 如果要透過 Synology Reverse Proxy 存取，改這裡
+    return 'http://100.81.173.84:5000';
 })();
 
 const ApiClient = {
