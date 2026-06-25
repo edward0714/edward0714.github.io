@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儀表板 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Dashboard-specific overrides (keeps style.css clean) */
+        .dash-card { height: 100%; display: flex; flex-direction: column; }
+        .dash-card .card-body { flex: 1; }
+        .minilist { display: flex; flex-direction: column; gap: 10px; }
+        .mini-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            border-radius: var(--rad-sm); background: rgba(255,255,255,.02);
+            transition: background .2s; text-decoration: none; color: var(--text);
+        }
+        .mini-item:hover { background: rgba(255,255,255,.05); }
+        .mini-icon { font-size: 1.3rem; flex-shrink: 0; width: 28px; text-align: center; }
+        .mini-body { flex: 1; min-width: 0; }
+        .mini-body .ttl { font-weight: 500; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mini-body .sub { font-size: .78rem; color: var(--text3); margin-top: 2px; }
+        .mini-badge {
+            font-size: .72rem; padding: 2px 8px; border-radius: 4px;
+            background: rgba(59,130,246,.15); color: var(--blue); flex-shrink: 0;
+        }
+        .mini-prio-low { background: rgba(34,197,94,.15); color: #86efac; }
+        .mini-prio-medium { background: rgba(245,158,11,.15); color: #fde68a; }
+        .mini-prio-high { background: rgba(239,68,68,.15); color: #fca5a5; }
+        .greeting-date { font-size: .85rem; color: var(--text3); margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<!-- ════════════════════ Navbar (shared pattern) ════════════════════ -->
+<nav class="navbar">
+    <div class="nav-inner">
+        <a href="dashboard.html" class="nav-brand">
+            <span>📋</span>
+            <strong>工作小秘書</strong>
+        </a>
+
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link active">儀表板</a>
+            <a href="tasks.html" class="nav-link">任務</a>
+            <a href="reports.html" class="nav-link">報告</a>
+            <a href="profile.html" class="nav-link">個人設定</a>
+            <span class="nav-user" id="navUserName"></span>
+            <button class="nav-link nav-logout" onclick="logoutUser()">登出</button>
+        </div>
+
+        <button class="mobile-btn" onclick="toggleMobileMenu()" aria-label="選單">☰</button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="dashboard.html" class="active">📊 儀表板</a>
+        <a href="tasks.html">📝 任務</a>
+        <a href="reports.html">📄 報告</a>
+        <a href="profile.html">👤 個人設定</a>
+        <div style="padding:10px 14px; font-size:.85rem; color:var(--text3)" id="mobileUserName"></div>
+        <button class="nav-link nav-logout" style="text-align:left; padding:10px 14px" onclick="logoutUser()">🚪 登出</button>
+    </div>
+</nav>
+
+<!-- ════════════════════ Page Content ════════════════════ -->
+<div class="container">
+
+    <!-- Page Header -->
+    <div class="page-hdr">
+        <div class="left">
+            <h1 id="greeting">👋 歡迎回來</h1>
+            <div class="greeting-date" id="todayDate"></div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats" id="statsGrid">
+        <div class="stat stat-blue">
+            <div class="icon">📝</div>
+            <div>
+                <div class="val" id="statTasks">—</div>
+                <div class="lbl">任務數</div>
+            </div>
+        </div>
+        <div class="stat stat-purple">
+            <div class="icon">📅</div>
+            <div>
+                <div class="val" id="statEvents">—</div>
+                <div class="lbl">行程數</div>
+            </div>
+        </div>
+        <div class="stat stat-green">
+            <div class="icon">✅</div>
+            <div>
+                <div class="val" id="statCompleted">—</div>
+                <div class="lbl">已完成</div>
+            </div>
+        </div>
+        <div class="stat stat-orange">
+            <div class="icon">📄</div>
+            <div>
+                <div class="val" id="statReports">—</div>
+                <div class="lbl">報告數</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Grid (2 columns) -->
+    <div class="dash-grid">
+
+        <!-- 📅 近兩週行事曆 -->
+        <div class="card dash-card">
+            <div class="card-hdr">
+                <h2>📅 近兩週行事曆</h2>
+            </div>
+            <div class="card-body" id="calendarSection">
+                <div class="loading-box"><div class="spinner"></div><p>載入中…</p></div>
+            </div>
+        </div>
+
+        <!-- 📝 近期待辦任務 -->
+        <div class="card dash-card">
+            <div class="card-hdr">
+                <h2>📝 近期待辦任務</h2>
+                <a href="tasks.html" class="card-badge" style="text-decoration:none">檢視全部 →</a>
+            </div>
+            <div class="card-body" id="taskSection">
+                <div class="loading-box"><div class="spinner"></div><p>載入中…</p></div>
+            </div>
+        </div>
+
+        <!-- 📊 近期報告 -->
+        <div class="card dash-card">
+            <div class="card-hdr">
+                <h2>📊 近期報告</h2>
+                <a href="reports.html" class="card-badge" style="text-decoration:none">檢視全部 →</a>
+            </div>
+            <div class="card-body" id="reportSection">
+                <div class="loading-box"><div class="spinner"></div><p>載入中…</p></div>
+            </div>
+        </div>
+
+        <!-- ⚡ 快捷操作 -->
+        <div class="card dash-card">
+            <div class="card-hdr">
+                <h2>⚡ 快捷操作</h2>
+            </div>
+            <div class="card-body">
+                <div class="qactions">
+                    <a href="tasks.html?action=new" class="qaction">
+                        <span class="icon">📝</span>
+                        <div>
+                            <div class="ttl">新增任務</div>
+                            <div class="dsc">建立一筆新的待辦任務</div>
+                        </div>
+                    </a>
+                    <a href="reports.html?action=new" class="qaction">
+                        <span class="icon">📄</span>
+                        <div>
+                            <div class="ttl">撰寫報告</div>
+                            <div class="dsc">提交工作日報、週報或月報</div>
+                        </div>
+                    </a>
+                    <a href="profile.html" class="qaction">
+                        <span class="icon">👤</span>
+                        <div>
+                            <div class="ttl">個人設定</div>
+                            <div class="dsc">修改個人資料與密碼</div>
+                        </div>
+                    </a>
+                    <a href="reports.html" class="qaction">
+                        <span class="icon">📊</span>
+                        <div>
+                            <div class="ttl">檢視報告</div>
+                            <div class="dsc">瀏覽所有歷史報告</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /.dash-grid -->
+
+</div><!-- /.container -->
+
+<!-- Toast Container -->
+<div id="toastContainer"></div>
+
+<!-- ════════════════════ Scripts ════════════════════ -->
+<script src="api.js"></script>
+<script>
+/* ─── Toast helper ─── */
+function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type === 'success' ? 'toast-s' : 'toast-e');
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+/* ─── Mobile menu toggle ─── */
+function toggleMobileMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+}
+
+/* ─── Date formatting (Chinese locale) ─── */
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('zh-TW', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'short'
+    }).replace(/星期/g, '週');
+}
+
+function formatDateTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('zh-TW', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        weekday: 'short', hour: '2-digit', minute: '2-digit'
+    }).replace(/星期/g, '週');
+}
+
+function formatTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatShortDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const today = new Date();
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+
+    const ds = d.toDateString();
+    if (ds === today.toDateString()) return '今天';
+    if (ds === tomorrow.toDateString()) return '明天';
+    if (ds === yesterday.toDateString()) return '昨天';
+
+    return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' }).replace(/星期/g, '週');
+}
+
+/* ─── Priority label ─── */
+function priorityLabel(p) {
+    const map = { 'low': '低', 'medium': '中', 'high': '高', 'urgent': '緊急' };
+    return map[p] || p || '';
+}
+
+function priorityClass(p) {
+    return 'mini-prio-' + (p || 'low');
+}
+
+/* ─── Load Dashboard ─── */
+async function loadDashboard() {
+    // 1. Check auth
+    const user = await requireAuth();
+    if (!user) return;
+
+    const displayName = user.display_name || user.username || '使用者';
+    document.getElementById('greeting').textContent = '👋 歡迎回來，' + displayName;
+    document.getElementById('navUserName').textContent = displayName;
+    document.getElementById('mobileUserName').textContent = '👤 ' + displayName;
+
+    // 2. Today's date
+    const now = new Date();
+    document.getElementById('todayDate').textContent =
+        now.toLocaleDateString('zh-TW', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+        }).replace(/星期/g, '週');
+
+    // 3. Fetch dashboard data
+    try {
+        const data = await ApiClient.getDashboard();
+
+        // ── Stats ──
+        const tasks = data.active_task_count || 0;
+        const events = Array.isArray(data.calendar_events) ? data.calendar_events.length : 0;
+        const completed = data.completed_count || 0;
+        const reports = Array.isArray(data.recent_reports) ? data.recent_reports.length : 0;
+        document.getElementById('statTasks').textContent = tasks;
+        document.getElementById('statEvents').textContent = events;
+        document.getElementById('statCompleted').textContent = completed;
+        document.getElementById('statReports').textContent = reports;
+
+        // ── Calendar Events ──
+        const calList = document.getElementById('calendarSection');
+        const calEvents = data.calendar_events || [];
+        if (calEvents.length === 0) {
+            calList.innerHTML =
+                '<div class="empty"><div class="icon">📅</div><h3>近期無行程</h3><p>目前沒有近兩週的行事曆活動</p></div>';
+        } else {
+            let html = '<div class="cal-list">';
+            calEvents.forEach(ev => {
+                const dotColor = ev.color || 'var(--blue)';
+                html +=
+                    '<div class="cal-item">' +
+                        '<span class="cal-dot" style="background:' + dotColor + '"></span>' +
+                        '<div class="cal-body">' +
+                            '<div class="cal-title">' + escapeHtml(ev.title || ev.summary || '') + '</div>' +
+                            '<div class="cal-time">' +
+                                (ev.start_date ? formatShortDate(ev.start_date) + (ev.start_time ? ' ' + ev.start_time : '') : '') +
+                                (ev.end_date && ev.end_date !== ev.start_date ? ' — ' + formatShortDate(ev.end_date) : '') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+            });
+            html += '</div>';
+            calList.innerHTML = html;
+        }
+
+        // ── Upcoming Tasks ──
+        const taskSection = document.getElementById('taskSection');
+        const upTasks = data.upcoming_tasks || [];
+        if (upTasks.length === 0) {
+            taskSection.innerHTML =
+                '<div class="empty"><div class="icon">📝</div><h3>暫無待辦任務</h3><p>目前沒有待處理的任務</p></div>';
+        } else {
+            let html = '<div class="minilist">';
+            upTasks.slice(0, 8).forEach(t => {
+                html +=
+                    '<a href="tasks.html?id=' + t.id + '" class="mini-item">' +
+                        '<span class="mini-icon">📌</span>' +
+                        '<div class="mini-body">' +
+                            '<div class="ttl">' + escapeHtml(t.title) + '</div>' +
+                            '<div class="sub">' +
+                                (t.due_date ? '截止：' + formatShortDate(t.due_date) : '') +
+                                (t.priority ? ' · ' : '') +
+                            '</div>' +
+                        '</div>' +
+                        (t.priority ? '<span class="mini-badge ' + priorityClass(t.priority) + '">' + priorityLabel(t.priority) + '</span>' : '') +
+                    '</a>';
+            });
+            html += '</div>';
+            taskSection.innerHTML = html;
+        }
+
+        // ── Recent Reports ──
+        const reportSection = document.getElementById('reportSection');
+        const repReports = data.recent_reports || [];
+        if (repReports.length === 0) {
+            reportSection.innerHTML =
+                '<div class="empty"><div class="icon">📊</div><h3>暫無報告</h3><p>還沒有提交過任何報告</p></div>';
+        } else {
+            let html = '<div class="minilist">';
+            repReports.slice(0, 6).forEach(r => {
+                const typeLabel = r.report_type === 'daily'   ? '日報' :
+                                  r.report_type === 'weekly'  ? '週報' :
+                                  r.report_type === 'monthly' ? '月報' : (r.report_type || '報告');
+                html +=
+                    '<a href="reports.html?id=' + r.id + '" class="mini-item">' +
+                        '<span class="mini-icon">📄</span>' +
+                        '<div class="mini-body">' +
+                            '<div class="ttl">' + escapeHtml(r.title || typeLabel + '報告') + '</div>' +
+                            '<div class="sub">' +
+                                (r.created_at ? formatShortDate(r.created_at) : '') +
+                                (r.report_type ? ' · ' + typeLabel : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<span class="mini-badge">' + typeLabel + '</span>' +
+                    '</a>';
+            });
+            html += '</div>';
+            reportSection.innerHTML = html;
+        }
+
+    } catch (err) {
+        showToast('❌ 載入儀表板資料失敗：' + err.message, 'error');
+        // Show error states in all sections
+        document.getElementById('calendarSection').innerHTML =
+            '<div class="empty"><div class="icon">⚠️</div><h3>載入失敗</h3><p>' + escapeHtml(err.message) + '</p></div>';
+        document.getElementById('taskSection').innerHTML =
+            '<div class="empty"><div class="icon">⚠️</div><h3>載入失敗</h3></div>';
+        document.getElementById('reportSection').innerHTML =
+            '<div class="empty"><div class="icon">⚠️</div><h3>載入失敗</h3></div>';
+    }
+}
+
+/* ─── Escape HTML ─── */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/* ─── Init ─── */
+loadDashboard();
+</script>
+</body>
+</html>

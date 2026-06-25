@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查看報告 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav class="navbar"><div class="nav-inner">
+    <a href="dashboard.html" class="nav-brand"><span>📋</span><strong>工作小秘書</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="dashboard.html" class="nav-link">🏠 總覽</a>
+        <a href="tasks.html" class="nav-link">📝 任務</a>
+        <a href="reports.html" class="nav-link active">📊 報告</a>
+        <a href="profile.html" class="nav-link">👤 設定</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">...</div></nav>
+
+<div class="container">
+    <div id="content" style="display:none">
+        <div class="page-hdr">
+            <div><a href="reports.html" class="back-link">← 返回列表</a><h1 class="gradient" id="rptTitle"></h1></div>
+            <div class="hdr-actions">
+                <a id="editBtn" class="btn btn-secondary">✏️ 編輯</a>
+                <button class="btn btn-danger" onclick="deleteReport()">🗑️ 刪除</button>
+            </div>
+        </div>
+
+        <div class="rpt-meta-bar" id="rptMeta"></div>
+
+        <div class="rpt-grid">
+            <div class="card">
+                <div class="card-hdr"><h2>📄 原始資料</h2><span id="fileLink"></span></div>
+                <div class="card-body"><div class="prose" id="rptDesc"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-hdr"><h2>✨ AI 摘要</h2><button class="btn btn-primary btn-sm" onclick="genSummary()">🤖 產生摘要</button></div>
+                <div class="card-body">
+                    <div id="summaryContent" class="empty"><div class="icon">🤖</div><p>點擊「產生摘要」按鈕</p></div>
+                    <div id="summaryLoading" style="display:none" class="loading-box"><div class="spinner"></div><p>AI 分析中...</p></div>
+                </div>
+            </div>
+            <div class="card full">
+                <div class="card-hdr"><h2>⚡ 操作</h2></div>
+                <div class="card-body">
+                    <div class="qactions">
+                        <button class="qaction" onclick="copySummary()"><div class="icon">📋</div><div><div class="ttl">複製摘要</div><div class="dsc">複製到剪貼簿</div></div></button>
+                        <a href="report-form.html" class="qaction"><div class="icon">📝</div><div><div class="ttl">新增報告</div><div class="dsc">建立新報告</div></div></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loading" class="empty" style="padding:80px 0"><div class="spinner"></div><p>載入中...</p></div>
+</div>
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+let report = null;
+
+function showToast(m,t){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+(t==='success'?'toast-s':'toast-e');e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+
+function escHtml(s) {const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function mdToHtml(md) {
+    if (!md) return '';
+    return md.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+             .replace(/\n/g,'<br>')
+             .replace(/- (.+?)(<br>|$)/g,'• $1<br>');
+}
+
+async function loadReport(id) {
+    try {
+        report = await ApiClient.getReport(id);
+        if (!report) throw new Error('報告不存在');
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+
+        document.getElementById('rptTitle').textContent = report.title;
+
+        const typeLabels = {monthly:'📋主管月會',qbr:'📈業務QBR',quarterly:'🎯員工季會'};
+        document.getElementById('rptMeta').innerHTML = `
+            <span style="font-weight:600">${typeLabels[report.report_type]||report.report_type}</span>
+            <span class="text-muted">📅 ${report.created_at ? new Date(report.created_at).toLocaleString('zh-TW') : ''}</span>
+            <span class="text-muted">狀態：<span style="color:${report.status==='completed'?'#22c55e':'#f59e0b'}">${report.status}</span></span>`;
+
+        document.getElementById('rptDesc').innerHTML = report.description ? report.description.replace(/\n/g,'<br>') : '<span class="text-muted">無內容</span>';
+
+        if (report.file_path) {
+            const url = ApiClient.getUploadUrl(report.file_path);
+            document.getElementById('fileLink').innerHTML = `<a href="${url}" target="_blank" class="btn btn-sm">📎 ${report.original_filename||'附件'}</a>`;
+        }
+
+        if (report.ai_summary) {
+            document.getElementById('summaryContent').innerHTML = `<div class="ai-box prose">${mdToHtml(report.ai_summary)}</div>`;
+        }
+
+        document.getElementById('editBtn').href = `report-form.html?id=${report.id}`;
+
+    } catch(e) {
+        document.getElementById('loading').innerHTML = `<div class="icon">⚠️</div><p>${e.message}</p><a href="reports.html" class="btn btn-primary btn-sm">返回</a>`;
+    }
+}
+
+async function genSummary() {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) return;
+    document.getElementById('summaryContent').style.display = 'none';
+    document.getElementById('summaryLoading').style.display = 'block';
+    try {
+        const result = await ApiClient.summarizeReport(id);
+        document.getElementById('summaryLoading').style.display = 'none';
+        document.getElementById('summaryContent').style.display = 'block';
+        document.getElementById('summaryContent').innerHTML = `<div class="ai-box prose">${mdToHtml(result.summary)}</div>`;
+        showToast('✅ AI 摘要已產生','success');
+    } catch(e) {
+        document.getElementById('summaryLoading').style.display = 'none';
+        document.getElementById('summaryContent').style.display = 'block';
+        document.getElementById('summaryContent').innerHTML = `<div class="err-box">${e.message}</div>`;
+    }
+}
+
+function copySummary() {
+    const text = document.getElementById('summaryContent').textContent;
+    if (!text || text.includes('尚未產生') || text.includes('點擊「產生摘要」')) {
+        showToast('尚無摘要可複製','error'); return;
+    }
+    navigator.clipboard.writeText(text).then(()=>showToast('✅ 已複製','success'))
+        .catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();showToast('✅ 已複製','success')});
+}
+
+async function deleteReport() {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id || !confirm('確定刪除此報告？')) return;
+    try {
+        await ApiClient.deleteReport(id);
+        showToast('✅ 已刪除','success');
+        setTimeout(()=>location.href='reports.html',500);
+    } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+(async function() {
+    const user = await requireAuth();
+    if (user) {
+        document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+        const id = new URLSearchParams(location.search).get('id');
+        if (id) loadReport(id);
+        else document.getElementById('loading').innerHTML = '<div class="icon">❓</div><p>未指定報告 ID</p>';
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人設定 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav class="navbar"><div class="nav-inner">
+    <a href="dashboard.html" class="nav-brand"><span>📋</span><strong>工作小秘書</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="dashboard.html" class="nav-link">🏠 總覽</a>
+        <a href="tasks.html" class="nav-link">📝 任務</a>
+        <a href="reports.html" class="nav-link">📊 報告</a>
+        <a href="profile.html" class="nav-link active">👤 設定</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">...</div></nav>
+
+<div class="container">
+    <div class="page-hdr"><div><h1 class="gradient">👤 個人設定</h1></div></div>
+    <div id="alertBox"></div>
+
+    <div class="profile-grid">
+        <!-- Profile -->
+        <div class="card">
+            <div class="card-hdr"><h2>個人資料</h2></div>
+            <div class="card-body">
+                <form id="profileForm" onsubmit="return saveProfile(event)">
+                    <div class="form-group"><label>顯示名稱</label><input type="text" id="dispName"></div>
+                    <div class="form-group"><label>電子郵件</label><input type="email" id="email"></div>
+                    <div class="form-group"><label>個人簡介</label><textarea id="bio" rows="4"></textarea></div>
+                    <button type="submit" class="btn btn-primary">💾 儲存變更</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security -->
+        <div class="card">
+            <div class="card-hdr"><h2>🔒 安全設定</h2></div>
+            <div class="card-body">
+                <div class="sec-item">
+                    <div><div class="sec-title">密碼</div><div class="sec-desc">定期更換密碼確保安全</div></div>
+                    <button class="btn btn-secondary" onclick="showPwForm()">變更密碼</button>
+                </div>
+                <hr class="divider">
+                <div class="sec-item">
+                    <div><div class="sec-title">帳號名稱</div><div class="sec-desc" id="usernameDisplay"></div></div>
+                    <span class="text-muted small">無法變更</span>
+                </div>
+                <hr class="divider">
+                <div class="sec-item">
+                    <div><div class="sec-title">建立時間</div><div class="sec-desc" id="createdAt"></div></div>
+                </div>
+
+                <!-- Password change form (hidden) -->
+                <div id="pwForm" style="display:none;margin-top:20px">
+                    <hr class="divider">
+                    <h3 style="margin-bottom:16px">🔑 變更密碼</h3>
+                    <form onsubmit="return changePw(event)">
+                        <div class="form-group"><label>目前密碼</label><input type="password" id="curPw" required></div>
+                        <div class="form-group"><label>新密碼</label><input type="password" id="newPw" required minlength="8"></div>
+                        <div class="form-group"><label>確認新密碼</label><input type="password" id="conPw" required minlength="8"></div>
+                        <div class="pw-rules"><p>🔒 密碼規則：</p><ul><li>至少 8 個字元</li><li>建議大小寫字母 + 數字 + 符號</li></ul></div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="hidePwForm()">取消</button>
+                            <button type="submit" class="btn btn-primary">🔑 變更密碼</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card">
+            <div class="card-hdr"><h2>📊 使用統計</h2></div>
+            <div class="card-body">
+                <div id="statsDisplay" class="text-muted">載入中...</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+function showToast(m,t){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+(t==='success'?'toast-s':'toast-e');e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+function showAlert(msg,type){document.getElementById('alertBox').innerHTML=`<div class="alert alert-${type}">${msg}</div>`;setTimeout(()=>document.getElementById('alertBox').innerHTML='',5000)}
+
+function showPwForm(){document.getElementById('pwForm').style.display='block';}
+function hidePwForm(){document.getElementById('pwForm').style.display='none';
+    document.getElementById('curPw').value='';document.getElementById('newPw').value='';document.getElementById('conPw').value='';}
+
+async function saveProfile(e) {
+    e.preventDefault();
+    try {
+        await ApiClient.updateProfile({
+            display_name: document.getElementById('dispName').value,
+            email: document.getElementById('email').value,
+            bio: document.getElementById('bio').value,
+        });
+        showToast('✅ 個人資料已更新','success');
+    } catch(e) { showAlert('❌ '+e.message,'error'); }
+    return false;
+}
+
+async function changePw(e) {
+    e.preventDefault();
+    const cur = document.getElementById('curPw').value;
+    const nw = document.getElementById('newPw').value;
+    const con = document.getElementById('conPw').value;
+    if (nw !== con) { showAlert('❌ 兩次密碼不一致','error'); return false; }
+    try {
+        await ApiClient.changePassword(cur, nw, con);
+        showToast('✅ 密碼已變更成功','success');
+        hidePwForm();
+    } catch(e) { showAlert('❌ '+e.message,'error'); }
+    return false;
+}
+
+(async function() {
+    const user = await requireAuth();
+    if (!user) return;
+    document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+
+    try {
+        const p = await ApiClient.getProfile();
+        document.getElementById('dispName').value = p.display_name || '';
+        document.getElementById('email').value = p.email || '';
+        document.getElementById('bio').value = p.bio || '';
+        document.getElementById('usernameDisplay').textContent = `👤 ${p.username}`;
+        document.getElementById('createdAt').textContent = p.created_at ? new Date(p.created_at).toLocaleDateString('zh-TW') : '';
+        document.getElementById('statsDisplay').innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;padding:8px 0"><span>📝 任務總數</span><strong style="color:var(--blue)">${p.task_count}</strong></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0"><span>📊 報告總數</span><strong style="color:var(--blue)">${p.report_count}</strong></div>
+            </div>`;
+    } catch(e) { showAlert('❌ 載入失敗: '+e.message,'error'); }
+})();
+</script>
+</body>
+</html>

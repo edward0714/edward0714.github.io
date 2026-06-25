@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作報告 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav class="navbar"><div class="nav-inner">
+    <a href="dashboard.html" class="nav-brand"><span>📋</span><strong>工作小秘書</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="dashboard.html" class="nav-link">🏠 總覽</a>
+        <a href="tasks.html" class="nav-link">📝 任務</a>
+        <a href="reports.html" class="nav-link active">📊 報告</a>
+        <a href="profile.html" class="nav-link">👤 設定</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">
+    <a href="dashboard.html">🏠 總覽</a><a href="tasks.html">📝 任務</a><a href="reports.html">📊 報告</a><a href="profile.html">👤 設定</a><a href="#" onclick="logoutUser()">🚪 登出</a>
+</div></nav>
+
+<div class="container">
+    <div class="page-hdr">
+        <div class="left"><h1 class="gradient">📊 工作報告</h1><p class="text-muted small">管理定期工作報告：主管月會、業務 QBR、員工季會</p></div>
+        <div class="hdr-actions"><a href="report-form.html" class="btn btn-primary">＋ 新增報告</a></div>
+    </div>
+
+    <div class="tabs" id="filterTabs">
+        <button class="tab active" data-type="">全部</button>
+        <button class="tab" data-type="monthly">📋 主管月會</button>
+        <button class="tab" data-type="qbr">📈 業務 QBR</button>
+        <button class="tab" data-type="quarterly">🎯 員工季會</button>
+    </div>
+
+    <div class="report-list" id="reportList"></div>
+</div>
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+let currentType = '';
+function showToast(m,t){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+(t==='success'?'toast-s':'toast-e');e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+
+const typeIcons = {monthly:'📋',qbr:'📈',quarterly:'🎯'};
+const typeLabels = {monthly:'主管月會',qbr:'業務 QBR',quarterly:'員工季會'};
+
+async function loadReports(type) {
+    try {
+        const list = document.getElementById('reportList');
+        list.innerHTML = '<div class="empty full"><div class="spinner"></div><p>載入中...</p></div>';
+        const reports = await ApiClient.getReports(type);
+        if (!reports.length) {
+            list.innerHTML = '<div class="empty full"><div class="icon">📊</div><h3>尚無報告</h3><p><a href="report-form.html" class="btn btn-primary btn-sm">建立第一份報告</a></p></div>';
+            return;
+        }
+        list.innerHTML = reports.map(r => `
+            <a href="report-view.html?id=${r.id}" class="rpt-card">
+                <div class="rpt-icon">${typeIcons[r.report_type]||'📄'}</div>
+                <div class="rpt-body">
+                    <div class="rpt-title">${escHtml(r.title)}</div>
+                    <div class="rpt-meta">
+                        <span class="rpt-type" style="background:rgba(59,130,246,.15);color:#93c5fd">${typeLabels[r.report_type]||r.report_type}</span>
+                        <span class="rpt-date">${r.created_at ? new Date(r.created_at).toLocaleDateString('zh-TW') : ''}</span>
+                    </div>
+                    ${r.description ? `<p class="text-muted small" style="margin-top:6px">${escHtml(r.description.slice(0,120))}${r.description.length>120?'...':''}</p>` : ''}
+                </div>
+                <div class="rpt-badges">
+                    ${r.ai_summary ? '<span title="有 AI 摘要">✨</span>' : ''}
+                    ${r.file_path ? '<span title="有附件">📎</span>' : ''}
+                </div>
+            </a>
+        `).join('');
+    } catch(e) {
+        document.getElementById('reportList').innerHTML = `<div class="empty full"><div class="icon">⚠️</div><p>${e.message}</p></div>`;
+    }
+}
+function escHtml(s) {const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+document.getElementById('filterTabs').addEventListener('click', function(e) {
+    const tab = e.target.closest('.tab');
+    if(!tab) return;
+    this.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentType = tab.dataset.type;
+    loadReports(currentType);
+});
+
+(async function() {
+    const user = await requireAuth();
+    if (user) document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+    loadReports('');
+})();
+</script>
+</body>
+</html>

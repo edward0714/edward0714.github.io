@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>報告表單 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav class="navbar"><div class="nav-inner">
+    <a href="dashboard.html" class="nav-brand"><span>📋</span><strong>工作小秘書</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="dashboard.html" class="nav-link">🏠 總覽</a>
+        <a href="tasks.html" class="nav-link">📝 任務</a>
+        <a href="reports.html" class="nav-link active">📊 報告</a>
+        <a href="profile.html" class="nav-link">👤 設定</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">...</div></nav>
+
+<div class="container">
+    <div class="page-hdr"><div><a href="reports.html" class="back-link">← 返回列表</a><h1 class="gradient" id="formTitle">📝 新增報告</h1></div></div>
+
+    <div class="card" style="max-width:800px;margin-bottom:40px">
+        <div class="card-body">
+            <form id="reportForm" enctype="multipart/form-data" onsubmit="return saveReport(event)">
+                <input type="hidden" id="reportId">
+
+                <div class="form-group">
+                    <label>報告標題 *</label>
+                    <input type="text" id="rptTitle" required placeholder="例如：2026年7月主管月會">
+                </div>
+
+                <div class="form-group">
+                    <label>報告類型</label>
+                    <div class="type-sel" id="typeSel">
+                        <label class="type-opt">
+                            <input type="radio" name="report_type" value="monthly">
+                            <div class="type-card"><div style="font-size:2rem">📋</div><div class="rpt-title">主管月會</div><div class="text-muted small">每月定期會議</div></div>
+                        </label>
+                        <label class="type-opt">
+                            <input type="radio" name="report_type" value="qbr">
+                            <div class="type-card"><div style="font-size:2rem">📈</div><div class="rpt-title">業務 QBR</div><div class="text-muted small">季度業務審查</div></div>
+                        </label>
+                        <label class="type-opt">
+                            <input type="radio" name="report_type" value="quarterly">
+                            <div class="type-card"><div style="font-size:2rem">🎯</div><div class="rpt-title">員工季會</div><div class="text-muted small">每季員工會議</div></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>報告內容 / 資料整理</label>
+                    <textarea id="rptDesc" rows="12" placeholder="輸入報告內容或重點資料&#10;&#10;💡 AI 會自動產生摘要"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>上傳附件</label>
+                    <div class="file-upload">
+                        <input type="file" id="rptFile" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg">
+                        <div class="file-up-placeholder" id="filePlaceholder">
+                            <span style="font-size:1.5rem">📎</span>
+                            <span class="text-muted">點擊選擇檔案（PDF、Office、圖片等）</span>
+                        </div>
+                        <div class="file-info" id="fileInfo" style="display:none">
+                            <span id="fileName"></span>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="clearFile()">移除</button>
+                        </div>
+                    </div>
+                    <div id="currentFile" class="current-file"></div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="reports.html" class="btn btn-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary">💾 儲存報告</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+let editId = null;
+
+function showToast(m,t){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+(t==='success'?'toast-s':'toast-e');e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+
+// File input visual
+document.getElementById('rptFile').addEventListener('change', function() {
+    if (this.files[0]) {
+        document.getElementById('filePlaceholder').style.display = 'none';
+        document.getElementById('fileInfo').style.display = 'flex';
+        document.getElementById('fileName').textContent = `📎 ${this.files[0].name} (${(this.files[0].size/1024).toFixed(1)} KB)`;
+    }
+});
+function clearFile() {
+    document.getElementById('rptFile').value = '';
+    document.getElementById('filePlaceholder').style.display = 'flex';
+    document.getElementById('fileInfo').style.display = 'none';
+}
+
+// Type selector visual
+document.getElementById('typeSel').addEventListener('change', function(e) {
+    if (e.target.name === 'report_type') {
+        this.querySelectorAll('.type-opt').forEach(el => el.classList.remove('selected'));
+        e.target.closest('.type-opt').classList.add('selected');
+    }
+});
+
+async function saveReport(e) {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append('title', document.getElementById('rptTitle').value.trim());
+    fd.append('report_type', document.querySelector('input[name="report_type"]:checked')?.value || '');
+    fd.append('description', document.getElementById('rptDesc').value.trim());
+    const fileInput = document.getElementById('rptFile');
+    if (fileInput.files[0]) fd.append('attachment', fileInput.files[0]);
+
+    try {
+        if (editId) {
+            await ApiClient.updateReport(editId, fd);
+            showToast('✅ 報告已更新', 'success');
+        } else {
+            await ApiClient.createReport(fd);
+            showToast('✅ 報告已建立', 'success');
+        }
+        setTimeout(() => location.href = 'reports.html', 600);
+    } catch(e) {
+        showToast('❌ '+e.message, 'error');
+    }
+    return false;
+}
+
+(async function() {
+    const user = await requireAuth();
+    if (user) {
+        document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+        const params = new URLSearchParams(location.search);
+        editId = params.get('id');
+        const presetType = params.get('type');
+
+        if (editId) {
+            document.getElementById('formTitle').textContent = '✏️ 編輯報告';
+            try {
+                const r = await ApiClient.getReport(editId);
+                document.getElementById('reportId').value = r.id;
+                document.getElementById('rptTitle').value = r.title;
+                document.getElementById('rptDesc').value = r.description || '';
+                // Select type
+                const radio = document.querySelector(`input[name="report_type"][value="${r.report_type}"]`);
+                if (radio) { radio.checked = true; radio.closest('.type-opt').classList.add('selected'); }
+                if (r.original_filename) {
+                    document.getElementById('currentFile').innerHTML = `📎 目前附件：${r.original_filename}`;
+                }
+            } catch(e) { showToast('❌ 載入失敗: '+e.message, 'error'); }
+        } else if (presetType) {
+            const radio = document.querySelector(`input[name="report_type"][value="${presetType}"]`);
+            if (radio) { radio.checked = true; radio.closest('.type-opt').classList.add('selected'); }
+        }
+    }
+})();
+</script>
+</body>
+</html>

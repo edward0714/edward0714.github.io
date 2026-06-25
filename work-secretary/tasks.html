@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待辦任務 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<!-- Navbar -->
+<nav class="navbar"><div class="nav-inner">
+    <a href="dashboard.html" class="nav-brand"><span>📋</span><strong>工作小秘書</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="dashboard.html" class="nav-link active">🏠 總覽</a>
+        <a href="tasks.html" class="nav-link">📝 任務</a>
+        <a href="reports.html" class="nav-link">📊 報告</a>
+        <a href="profile.html" class="nav-link">👤 設定</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">
+    <a href="dashboard.html">🏠 總覽</a>
+    <a href="tasks.html">📝 任務</a>
+    <a href="reports.html">📊 報告</a>
+    <a href="profile.html">👤 設定</a>
+    <a href="#" onclick="logoutUser()">🚪 登出</a>
+</div></nav>
+
+<div class="container">
+    <div class="page-hdr">
+        <div class="left"><h1 class="gradient">📝 待辦任務</h1><p class="text-muted small">管理您的工作待辦事項</p></div>
+        <div class="hdr-actions"><button class="btn btn-primary" onclick="openTaskModal()">＋ 新增任務</button></div>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <!-- Filter Tabs -->
+    <div class="tabs" id="filterTabs">
+        <button class="tab active" data-status="">全部</button>
+        <button class="tab" data-status="pending">待處理</button>
+        <button class="tab" data-status="in_progress">進行中</button>
+        <button class="tab" data-status="completed">已完成</button>
+        <button class="tab" data-status="cancelled">已取消</button>
+    </div>
+
+    <!-- Task Grid -->
+    <div class="task-grid" id="taskGrid"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="taskModal">
+    <div class="modal-overlay" onclick="closeTaskModal()"></div>
+    <div class="modal-content">
+        <div class="modal-hdr"><h2 id="modalTitle">新增任務</h2><button class="modal-close" onclick="closeTaskModal()">×</button></div>
+        <form id="taskForm" onsubmit="return saveTask(event)">
+            <input type="hidden" id="taskId">
+            <div class="form-group">
+                <label>任務標題 *</label>
+                <input type="text" id="taskTitle" required placeholder="輸入任務名稱">
+            </div>
+            <div class="form-group">
+                <label>描述</label>
+                <textarea id="taskDesc" rows="3" placeholder="任務詳細說明（選填）"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>優先級</label>
+                    <select id="taskPriority">
+                        <option value="low">🟢 低</option>
+                        <option value="medium" selected>🟡 中</option>
+                        <option value="high">🟠 高</option>
+                        <option value="urgent">🔴 緊急</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>截止日期</label>
+                    <input type="date" id="taskDueDate">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeTaskModal()">取消</button>
+                <button type="submit" class="btn btn-primary">💾 儲存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+let currentFilter = '';
+let tasks = [];
+
+function showToast(msg, type) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className = 'toast '+(type==='success'?'toast-s':'toast-e');
+    t.textContent = msg; c.appendChild(t); setTimeout(()=>t.remove(),3500);
+}
+
+async function loadTasks(status) {
+    try {
+        const grid = document.getElementById('taskGrid');
+        grid.innerHTML = '<div class="empty full"><div class="spinner"></div><p>載入中...</p></div>';
+        tasks = await ApiClient.getTasks(status);
+        renderTasks();
+    } catch(e) {
+        document.getElementById('taskGrid').innerHTML = `<div class="empty full"><div class="icon">⚠️</div><p>${e.message}</p></div>`;
+    }
+}
+
+function renderTasks() {
+    const grid = document.getElementById('taskGrid');
+    if (!tasks.length) {
+        grid.innerHTML = '<div class="empty full"><div class="icon">🎯</div><h3>尚無任務</h3><p>點擊「新增任務」開始建立</p></div>';
+        return;
+    }
+    grid.innerHTML = tasks.map(t => {
+        const prioLabels = {low:'🟢低',medium:'🟡中',high:'🟠高',urgent:'🔴緊急'};
+        const statusLabels = {pending:'⏳待處理',in_progress:'🔄進行中',completed:'✅已完成',cancelled:'❌已取消'};
+        const dueStr = t.due_date ? new Date(t.due_date).toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit'}) : '';
+        return `<div class="task-card ${t.status}" data-id="${t.id}">
+            <div class="tc-hdr">
+                <span class="tc-prio prio-${t.priority}">${prioLabels[t.priority]||t.priority}</span>
+                <div><button class="btn btn-sm btn-secondary" onclick="editTask('${t.id}')">✏️</button>
+                      <button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">🗑️</button></div>
+            </div>
+            <div class="tc-body">
+                <div class="tc-title ${t.status==='completed'?'done':''}">${escHtml(t.title)}</div>
+                ${t.description ? `<p class="tc-desc">${escHtml(t.description)}</p>` : ''}
+            </div>
+            <div class="tc-ftr">
+                <span class="tc-status ${t.status}">${statusLabels[t.status]}</span>
+                ${dueStr ? `<span class="text-muted small">📅 ${dueStr}</span>` : ''}
+            </div>
+            <div class="tc-actions">
+                ${t.status!=='pending' ? `<button onclick="changeStatus('${t.id}','pending')">⏳</button>` : ''}
+                ${t.status!=='in_progress' ? `<button onclick="changeStatus('${t.id}','in_progress')">🔄</button>` : ''}
+                ${t.status!=='completed' ? `<button onclick="changeStatus('${t.id}','completed')">✅</button>` : ''}
+                ${t.status!=='cancelled' ? `<button onclick="changeStatus('${t.id}','cancelled')">❌</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function escHtml(s) {
+    const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+// ─── Filter ───
+document.getElementById('filterTabs').addEventListener('click', function(e) {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    this.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.status;
+    loadTasks(currentFilter);
+});
+
+// ─── Modal ───
+function openTaskModal(task) {
+    document.getElementById('modalTitle').textContent = task ? '編輯任務' : '新增任務';
+    document.getElementById('taskId').value = task ? task.id : '';
+    document.getElementById('taskTitle').value = task ? task.title : '';
+    document.getElementById('taskDesc').value = task ? (task.description||'') : '';
+    document.getElementById('taskPriority').value = task ? task.priority : 'medium';
+    document.getElementById('taskDueDate').value = task && task.due_date ? task.due_date.slice(0,10) : '';
+    document.getElementById('taskModal').style.display = 'flex';
+}
+function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeTaskModal(); });
+
+function editTask(id) {
+    const t = tasks.find(x => x.id == id);
+    if (t) openTaskModal(t);
+}
+
+async function saveTask(e) {
+    e.preventDefault();
+    const id = document.getElementById('taskId').value;
+    const data = {
+        title: document.getElementById('taskTitle').value.trim(),
+        description: document.getElementById('taskDesc').value.trim(),
+        priority: document.getElementById('taskPriority').value,
+        due_date: document.getElementById('taskDueDate').value || null,
+    };
+    try {
+        if (id) {
+            await ApiClient.updateTask(id, data);
+            showToast('✅ 任務已更新', 'success');
+        } else {
+            await ApiClient.createTask(data);
+            showToast('✅ 任務已新增', 'success');
+        }
+        closeTaskModal();
+        loadTasks(currentFilter);
+    } catch(e) { showToast('❌ '+e.message, 'error'); }
+    return false;
+}
+
+async function changeStatus(id, status) {
+    try { await ApiClient.updateTask(id, {status}); showToast('✅ 狀態已更新','success'); loadTasks(currentFilter); }
+    catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+async function deleteTask(id) {
+    if (!confirm('確定刪除此任務？')) return;
+    try { await ApiClient.deleteTask(id); showToast('✅ 任務已刪除','success'); loadTasks(currentFilter); }
+    catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+// ─── Init ───
+(async function() {
+    const user = await requireAuth();
+    if (user) document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+    loadTasks('');
+})();
+</script>
+</body>
+</html>

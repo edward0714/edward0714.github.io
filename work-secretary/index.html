@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - 工作小秘書</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-hdr">
+            <div class="icon">📋</div>
+            <h1 class="gradient">工作小秘書</h1>
+            <p class="auth-sub">您的個人工作管理助手</p>
+        </div>
+
+        <div id="alertBox"></div>
+
+        <form id="loginForm" class="auth-form">
+            <div class="form-group">
+                <label for="username">帳號</label>
+                <input type="text" id="username" name="username" placeholder="請輸入帳號" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="loginBtn">登入</button>
+        </form>
+
+        <div class="auth-ftr">
+            <a href="forgot-password.html">忘記密碼？</a>
+        </div>
+
+        <div class="auth-sec">
+            🔒 本系統採用加密連線，保障您的資料安全
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="api.js"></script>
+<script>
+function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(() => { box.innerHTML = ''; }, 5000);
+}
+
+function showToast(msg, type) {
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type === 'success' ? 'toast-s' : 'toast-e');
+    t.textContent = msg;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+// 如果已登入，直接跳儀表板
+ApiClient.checkAuth().then(r => {
+    if (r.authenticated) window.location.href = 'dashboard.html';
+});
+
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = '⏳ 登入中...';
+
+    try {
+        const result = await ApiClient.login(
+            document.getElementById('username').value,
+            document.getElementById('password').value
+        );
+        showToast(`✅ ${result.message}`, 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
+    } catch (err) {
+        showAlert('❌ ' + err.message, 'error');
+        btn.disabled = false; btn.textContent = '登入';
+    }
+});
+</script>
+</body>
+</html>
