@@ -172,10 +172,10 @@
                 <button class="rpt-range-btn" data-ov="quarterly">📅 季</button>
                 <button class="rpt-range-btn" data-ov="yearly">📅 年</button>
                 <button class="rpt-range-btn" data-ov="custom">📅 自訂</button>
-                <div id="ovCustomRange" style="display:none;display:inline-flex;gap:6px;align-items:center">
+                <div id="ovCustomRange" style="display:none;gap:6px;align-items:center">
                     <input type="date" class="rpt-date-input" id="ovStart"> <span style="color:var(--text3)">—</span>
                     <input type="date" class="rpt-date-input" id="ovEnd">
-                    <button class="rpt-range-btn" style="background:var(--blue);color:white;border-color:var(--blue)" onclick="loadOverview()">查詢</button>
+                    <button class="rpt-range-btn" style="background:var(--blue);color:white;border-color:var(--blue)" onclick="loadOverview('custom')">查詢</button>
                 </div>
             </div>
             <!-- Dynamic Summary -->
@@ -228,10 +228,10 @@
             <button class="rpt-range-btn" data-range="quarterly">📅 季</button>
             <button class="rpt-range-btn" data-range="yearly">📅 年</button>
             <button class="rpt-range-btn" data-range="custom">📅 自訂</button>
-            <div id="customRange" style="display:none;display:inline-flex;gap:6px;align-items:center">
+            <div id="customRange" style="display:none;gap:6px;align-items:center">
                 <input type="date" class="rpt-date-input" id="rptStart"> <span style="color:var(--text3)">—</span>
                 <input type="date" class="rpt-date-input" id="rptEnd">
-                <button class="rpt-range-btn" style="background:var(--blue);color:white;border-color:var(--blue)" onclick="loadReport()">查詢</button>
+                <button class="rpt-range-btn" style="background:var(--blue);color:white;border-color:var(--blue)" onclick="loadReport('custom')">查詢</button>
             </div>
         </div>
         <div class="csv-actions">
@@ -465,6 +465,7 @@ function setupOverviewRange() {
     document.querySelectorAll('#overviewRange .rpt-range-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.dataset.ov === 'custom') {
+                currentOvRange = 'custom';
                 document.getElementById('ovStart').style.display='';
                 document.getElementById('ovEnd').style.display='';
                 btn.nextElementSibling.style.display='inline-flex';
