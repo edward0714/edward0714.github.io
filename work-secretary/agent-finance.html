@@ -85,6 +85,29 @@
         .stacked-bar-label { display:flex; align-items:center; gap:4px; font-size:.72rem; color:var(--text3); }
         .stacked-bar-label .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .stacked-bar-label .lb-name { color:var(--text2); }
+        .overview-quick { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+        .oq-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--rad-md); padding:18px; transition:border-color .2s; }
+        .oq-card:hover { border-color:var(--border-hover); }
+        .oq-hdr { font-size:.82rem; font-weight:600; color:var(--text2); margin-bottom:10px; letter-spacing:.3px; }
+        .oq-list { display:flex; flex-direction:column; gap:6px; }
+        .oq-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); cursor:pointer; transition:all .15s; }
+        .oq-item:hover { background:var(--bg-hover); }
+        .oq-item .oq-icon { font-size:1.1rem; width:22px; text-align:center; flex-shrink:0; }
+        .oq-item .oq-name { flex:1; font-size:.82rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .oq-item .oq-amt { font-size:.85rem; font-weight:600; white-space:nowrap; }
+        .oq-income .oq-item .oq-amt { color:var(--green); }
+        .oq-expense .oq-item .oq-amt { color:var(--red); }
+        .oq-ratio-body { display:flex; flex-direction:column; gap:12px; justify-content:center; height:calc(100% - 30px); }
+        .ratio-bar-wrap { width:100%; }
+        .ratio-bar { display:flex; width:100%; height:32px; border-radius:8px; overflow:hidden; }
+        .ratio-seg { height:100%; transition:width .6s ease; }
+        .ratio-income { background:linear-gradient(90deg,#22c55e,#16a34a); }
+        .ratio-expense { background:linear-gradient(90deg,#ef4444,#dc2626); }
+        .ratio-labels { display:flex; justify-content:space-around; }
+        .ratio-label { display:flex; align-items:center; gap:6px; font-size:.88rem; color:var(--text2); font-weight:500; }
+        .ratio-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+        .ratio-dot.inc { background:var(--green); }
+        .ratio-dot.exp { background:var(--red); }
         .chart-side-table { display:flex; flex-direction:column; gap:3px; overflow-y:auto; padding:2px 0; }
         .side-table-row { display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:4px; cursor:pointer; transition:background .15s; font-size:.8rem; }
         .side-table-row:hover { background:var(--bg-hover); }
@@ -147,8 +170,9 @@
         .csv-actions a,.csv-actions button { padding:8px 16px; border-radius:var(--rad-sm); font-size:.82rem; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
 
         @media (max-width:640px) {
-            .finance-stats { grid-template-columns:1fr; }
-            .chart-grid { grid-template-columns:1fr; }
+                    .chart-grid { grid-template-columns:1fr; }
+                    .finance-stats { grid-template-columns:1fr; }
+                    .overview-quick { grid-template-columns:1fr; }
             .budget-summary { grid-template-columns:1fr; }
             .tx-filters { flex-direction:column; align-items:stretch; }
         }
@@ -209,10 +233,30 @@
                 </div>
             </div>
             <!-- Dynamic Summary -->
-            <div class="finance-stats" id="overviewStats">
-                <div class="fstat income" onclick="goToTransactions('','income')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor=''"><div class="lbl">💰 收入</div><div class="val" id="ovIncome">—</div><div class="sub" id="ovIncomeSub"></div></div>
-                <div class="fstat expense" onclick="goToTransactions('','expense')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor=''"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
-                <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
+            <div class="overview-quick" id="overviewStats">
+                <div class="oq-card oq-income">
+                    <div class="oq-hdr">📥 前3大收入</div>
+                    <div class="oq-list" id="ovTopIncome"></div>
+                </div>
+                <div class="oq-card oq-expense">
+                    <div class="oq-hdr">📤 前3大支出</div>
+                    <div class="oq-list" id="ovTopExpense"></div>
+                </div>
+                <div class="oq-card oq-ratio">
+                    <div class="oq-hdr">⚖️ 收支佔比</div>
+                    <div class="oq-ratio-body" id="ovRatio">
+                        <div class="ratio-bar-wrap">
+                            <div class="ratio-bar">
+                                <div class="ratio-seg ratio-income" id="ratioIncomeBar" style="width:50%"></div>
+                                <div class="ratio-seg ratio-expense" id="ratioExpenseBar" style="width:50%"></div>
+                            </div>
+                        </div>
+                        <div class="ratio-labels">
+                            <div class="ratio-label"><span class="ratio-dot inc"></span>收入 <span id="ratioIncomePct">50</span>%</div>
+                            <div class="ratio-label"><span class="ratio-dot exp"></span>支出 <span id="ratioExpensePct">50</span>%</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div style="margin-top:16px">
                 <div class="chart-card"><h3>📤 支出分類</h3><div style="display:flex;gap:16px;flex:1;min-height:0"><div class="chart-wrap" style="width:50%;height:240px"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div><div class="chart-side-table" id="legendExpensePie" style="width:50%"></div></div></div>
@@ -520,14 +564,38 @@ async function loadOverview(range) {
         }
         const data = await ApiClient.request('/finance/report?'+params.toString());
 
-        // Summary cards
-        const rangeLabels = {daily:'今日',weekly:'本週',monthly:'本月',quarterly:'本季',yearly:'今年',custom:'自訂區間'};
-        const lbl = rangeLabels[range]||'';
-        document.getElementById('ovIncome').textContent='NT$ '+(data.total_income||0).toLocaleString();
-        document.getElementById('ovExpense').textContent='NT$ '+(data.total_expense||0).toLocaleString();
-        document.getElementById('ovBalance').textContent='NT$ '+(data.balance||0).toLocaleString();
-        document.getElementById('ovIncomeSub').textContent=lbl;
-        document.getElementById('ovExpenseSub').textContent=(data.transaction_count||0)+' 筆';
+        // Summary — top 3 income, top 3 expense, ratio
+        const incCats = data.income_by_category || [];
+        const expCats = data.expense_by_category || [];
+        const totalInc = data.total_income || 0;
+        const totalExp = data.total_expense || 0;
+        const grandTotal = totalInc + totalExp;
+
+        // Top 3 income
+        document.getElementById('ovTopIncome').innerHTML = incCats.slice(0,3).map(c =>
+            `<div class="oq-item" onclick="goToTransactions('${((categories.income||[]).find(x=>x.name===c.name)?.id||'')}','income')">
+                <span class="oq-icon">${c.icon}</span>
+                <span class="oq-name">${c.name}</span>
+                <span class="oq-amt">NT$${(c.amount >= 10000 ? (c.amount/1000).toFixed(0)+'k' : c.amount.toLocaleString())}</span>
+            </div>`
+        ).join('') || '<div class="oq-item" style="cursor:default;opacity:.4"><span class="oq-name">尚無收入</span></div>';
+
+        // Top 3 expense
+        document.getElementById('ovTopExpense').innerHTML = expCats.slice(0,3).map(c =>
+            `<div class="oq-item" onclick="goToTransactions('${((categories.expense||[]).find(x=>x.name===c.name)?.id||'')}','expense')">
+                <span class="oq-icon">${c.icon}</span>
+                <span class="oq-name">${c.name}</span>
+                <span class="oq-amt">NT$${(c.amount >= 10000 ? (c.amount/1000).toFixed(0)+'k' : c.amount.toLocaleString())}</span>
+            </div>`
+        ).join('') || '<div class="oq-item" style="cursor:default;opacity:.4"><span class="oq-name">尚無支出</span></div>';
+
+        // Income/Expense ratio bar
+        const incPct = grandTotal > 0 ? ((totalInc / grandTotal) * 100).toFixed(1) : 50;
+        const expPct = grandTotal > 0 ? ((totalExp / grandTotal) * 100).toFixed(1) : 50;
+        document.getElementById('ratioIncomeBar').style.width = incPct + '%';
+        document.getElementById('ratioExpenseBar').style.width = expPct + '%';
+        document.getElementById('ratioIncomePct').textContent = incPct;
+        document.getElementById('ratioExpensePct').textContent = expPct;
 
         // Category lists & charts
         renderCatList('ovExpenseCats', data.expense_by_category||[], 'expense', data.total_expense);
