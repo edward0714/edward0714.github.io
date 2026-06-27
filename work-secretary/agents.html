@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選擇助理 - 愛德華AI私人助理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .agents-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+        .agents-hdr { text-align: center; margin-bottom: 48px; }
+        .agents-hdr h1 { font-size: 2rem; margin-bottom: 8px; }
+        .agents-hdr p { color: var(--text3); font-size: 1rem; }
+        .agents-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 900px; width: 100%; }
+        .agent-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--rad-lg);
+            padding: 36px 24px; text-align: center; cursor: pointer; text-decoration: none; color: var(--text);
+            transition: all .25s ease; position: relative; overflow: hidden;
+        }
+        .agent-card:hover { border-color: var(--blue); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(59,130,246,.15); }
+        .agent-card:active { transform: translateY(-1px); }
+        .agent-icon { font-size: 3.5rem; margin-bottom: 20px; display: block; line-height: 1; }
+        .agent-name { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .agent-desc { font-size: .85rem; color: var(--text3); line-height: 1.5; margin-bottom: 16px; }
+        .agent-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: .75rem; font-weight: 500; background: rgba(59,130,246,.12); color: var(--blue); }
+        .agent-card.work:hover .agent-badge { background: rgba(59,130,246,.25); }
+        .agent-card.finance { border-color: rgba(34,197,94,.2); }
+        .agent-card.finance:hover { border-color: var(--green); box-shadow: 0 8px 30px rgba(34,197,94,.15); }
+        .agent-card.finance .agent-badge { background: rgba(34,197,94,.12); color: var(--green); }
+        .agent-card.finance:hover .agent-badge { background: rgba(34,197,94,.25); }
+        .agent-card.transport { border-color: rgba(139,92,246,.2); }
+        .agent-card.transport:hover { border-color: var(--purple); box-shadow: 0 8px 30px rgba(139,92,246,.15); }
+        .agent-card.transport .agent-badge { background: rgba(139,92,246,.12); color: var(--purple); }
+        .agent-card.transport:hover .agent-badge { background: rgba(139,92,246,.25); }
+        .agent-user { position: absolute; top: 16px; right: 20px; font-size: .8rem; color: var(--text3); }
+        .logout-btn { position: absolute; top: 16px; left: 20px; font-size: .8rem; color: var(--text3); cursor: pointer; background: none; border: none; padding: 6px 12px; border-radius: 6px; transition: all .2s; }
+        .logout-btn:hover { background: rgba(239,68,68,.1); color: var(--red); }
+        @media (max-width: 640px) {
+            .agents-grid { grid-template-columns: 1fr; max-width: 320px; }
+            .agent-card { padding: 28px 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="agents-page">
+    <button class="logout-btn" onclick="logoutUser()">🚪 登出</button>
+    <span class="agent-user" id="userName"></span>
+
+    <div class="agents-hdr">
+        <h1 class="gradient">👋 歡迎回來</h1>
+        <p>請選擇您要使用的 AI 助理代理</p>
+    </div>
+
+    <div class="agents-grid">
+        <!-- 工作秘書 -->
+        <a href="dashboard.html" class="agent-card work">
+            <span class="agent-icon">📋</span>
+            <div class="agent-name">工作秘書</div>
+            <div class="agent-desc">任務管理、工作報告、行事曆整合<br>管理您的日常工作與會議</div>
+            <span class="agent-badge">進入工作區 →</span>
+        </a>
+
+        <!-- 財務秘書 -->
+        <a href="agent-finance.html" class="agent-card finance">
+            <span class="agent-icon">💰</span>
+            <div class="agent-name">財務秘書</div>
+            <div class="agent-desc">記帳管理、發票辨識、財務報表<br>掌握您的收支與財務狀況</div>
+            <span class="agent-badge">進入財務區 →</span>
+        </a>
+
+        <!-- 交通秘書 -->
+        <a href="agent-transport.html" class="agent-card transport">
+            <span class="agent-icon">🚗</span>
+            <div class="agent-name">交通秘書</div>
+            <div class="agent-desc">Tesla 車輛監控、充電管理<br>即時掌握您的愛車狀態</div>
+            <span class="agent-badge">進入車輛區 →</span>
+        </a>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+async function init() {
+    const user = await requireAuth();
+    if (user) {
+        document.getElementById('userName').textContent = `👤 ${user.display_name || user.username}`;
+    }
+}
+function logoutUser() {
+    ApiClient.logout().then(() => { window.location.href = 'index.html'; });
+}
+init();
+</script>
+</body>
+</html>

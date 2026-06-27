@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通秘書 - 愛德華AI私人助理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .agent-nav { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+        .agent-nav a { display: flex; align-items: center; gap: 6px; color: var(--text3); text-decoration: none; font-size: .85rem; padding: 4px 10px; border-radius: 6px; transition: all .2s; }
+        .agent-nav a:hover { background: var(--bg-hover); color: var(--text); }
+        .agent-nav .sep { color: var(--text3); font-size: .7rem; }
+        .tesla-status { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .ts-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--rad-md); padding: 20px; text-align: center; }
+        .ts-card .val { font-size: 1.4rem; font-weight: 700; margin-top: 8px; }
+        .ts-card .lbl { font-size: .8rem; color: var(--text3); }
+        .ts-card .icon { font-size: 2rem; }
+    </style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<nav class="navbar"><div class="nav-inner">
+    <a href="agents.html" class="nav-brand"><span>🏠</span><strong>愛德華AI私人助理</strong></a>
+    <div class="nav-links">
+        <span class="nav-user" id="navUser"></span>
+        <a href="agents.html" class="nav-link">🏠 助理</a>
+        <a href="#" class="nav-link active">🚗 交通</a>
+        <button class="nav-link nav-logout" onclick="logoutUser()">🚪 登出</button>
+    </div>
+    <button class="mobile-btn" onclick="document.getElementById('mMenu').classList.toggle('open')">☰</button>
+</div>
+<div class="mobile-menu" id="mMenu">
+    <a href="agents.html">🏠 助理選擇</a>
+    <a href="#" class="active">🚗 交通秘書</a>
+    <a href="#" onclick="logoutUser()">🚪 登出</a>
+</div></nav>
+
+<div class="container">
+    <div class="agent-nav">
+        <a href="agents.html">🏠 助理</a>
+        <span class="sep">›</span>
+        <a href="#" style="color:var(--text)">🚗 交通秘書</a>
+    </div>
+
+    <div class="page-hdr"><h1 class="gradient">🚗 Tesla 車輛狀態</h1></div>
+
+    <div id="teslaContent">
+        <div class="card">
+            <div class="card-body" style="text-align:center;padding:60px 20px">
+                <div class="spinner"></div>
+                <p style="margin-top:16px;color:var(--text3)">載入 Tesla 資料...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+<script src="api.js"></script>
+<script>
+async function init() {
+    const user = await requireAuth();
+    if (!user) return;
+    document.getElementById('navUser').textContent = `👤 ${user.display_name || user.username}`;
+    loadTesla();
+}
+
+async function loadTesla() {
+    const el = document.getElementById('teslaContent');
+    try {
+        const status = await ApiClient._get('/tesla/check');
+        if (!status.authorized) {
+            const auth = await ApiClient._get('/tesla/auth');
+            el.innerHTML = `<div class="card" style="max-width:500px;margin:0 auto">
+                <div class="card-body" style="text-align:center;padding:60px 20px">
+                    <div style="font-size:3rem;margin-bottom:16px">🔌</div>
+                    <h2>尚未連結 Tesla</h2>
+                    <p class="text-muted" style="margin:12px 0 24px">請先授權 Tesla 帳號以查看車輛狀態</p>
+                    <a href="${auth.login_url}" class="btn btn-primary">🔗 連結 Tesla</a>
+                </div>
+            </div>`;
+            return;
+        }
+        const vehicles = await ApiClient._get('/tesla/vehicles');
+        if (!vehicles.vehicles || vehicles.vehicles.length === 0) {
+            el.innerHTML = '<div class="card"><div class="card-body" style="text-align:center;padding:60px 20px"><div style="font-size:3rem">🚗</div><h2>無車輛資料</h2><p class="text-muted">尚未找到 Tesla 車輛</p></div></div>';
+            return;
+        }
+        const v = vehicles.vehicles[0];
+        const s = await ApiClient._get('/tesla/status?vin=' + (v.vin || ''));
+        el.innerHTML = `
+            <div class="tesla-status">
+                <div class="ts-card"><div class="icon">🔋</div><div class="lbl">電量</div><div class="val" style="color:var(--green)">${s.battery_level || '—'}%</div></div>
+                <div class="ts-card"><div class="icon">⚡</div><div class="lbl">續航里程</div><div class="val">${s.battery_range ? s.battery_range + ' km' : '—'}</div></div>
+                <div class="ts-card"><div class="icon">🔌</div><div class="lbl">充電狀態</div><div class="val">${s.charging_state || '—'}</div></div>
+                <div class="ts-card"><div class="icon">📍</div><div class="lbl">車輛型號</div><div class="val">${v.display_name || v.vin || '—'}</div></div>
+            </div>
+            <div class="card"><div class="card-hdr"><h2>📊 充電歷史（近30天）</h2></div>
+            <div class="card-body" id="chargingHistory"><div class="tx-empty"><p>載入中...</p></div></div></div>`;
+        // Load charging history
+        try {
+            const ch = await ApiClient._get('/tesla/charging?days=30&vin=' + (v.vin || ''));
+            const histEl = document.getElementById('chargingHistory');
+            if (ch.charging_sessions && ch.charging_sessions.length) {
+                histEl.innerHTML = '<div class="minilist">' + ch.charging_sessions.slice(0, 10).map(session =>
+                    `<div class="mini-item"><span class="mini-icon">⚡</span><div class="mini-body"><div class="ttl">${session.date || ''} — ${session.energy_added || '?'} kWh</div><div class="sub">${session.start_range || '?'} → ${session.end_range || '?'} km</div></div></div>`
+                ).join('') + '</div>';
+            } else {
+                histEl.innerHTML = '<div class="tx-empty"><p>近30天無充電記錄</p></div>';
+            }
+        } catch(e) {
+            document.getElementById('chargingHistory').innerHTML = '<div class="tx-empty"><p>⚠️ 無法載入充電歷史</p></div>';
+        }
+    } catch(e) {
+        el.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:60px 20px"><div style="font-size:3rem">⚠️</div><h2>載入失敗</h2><p class="text-muted">${e.message}</p></div></div>`;
+    }
+}
+
+function showToast(m,t){const c=document.getElementById('toastContainer');const e=document.createElement('div');e.className='toast '+(t==='success'?'toast-s':'toast-e');e.textContent=m;c.appendChild(e);setTimeout(()=>e.remove(),3500);}
+function logoutUser(){ApiClient.logout().then(()=>{window.location.href='index.html';});}
+init();
+</script>
+</body>
+</html>

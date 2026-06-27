@@ -67,6 +67,9 @@ const ApiClient = {
     _formPost: (path, formData) => ApiClient._request(path, { method: 'POST', body: formData }),
     _formPut: (path, formData) => ApiClient._request(path, { method: 'PUT', body: formData }),
 
+    // Public generic request method (used by finance pages)
+    request: (path, options = {}) => ApiClient._request(path, options),
+
     // ─── Auth ────────────────────────────────
     checkAuth: () => ApiClient._get('/auth/check'),
     login: (username, password) => ApiClient._post('/auth/login', { username, password }),
