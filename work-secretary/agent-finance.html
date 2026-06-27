@@ -527,6 +527,12 @@ function renderPieChart(canvasId, cats, type) {
 
     if (!cats.length) return;
 
+    // Chart.js not loaded yet — wait and retry
+    if (typeof Chart === 'undefined') {
+        setTimeout(() => renderPieChart(canvasId, cats, type), 200);
+        return;
+    }
+
     const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
     const labels = cats.map(c => c.icon + ' ' + c.name);
     const data = cats.map(c => c.amount);
