@@ -527,17 +527,16 @@ function renderPieChart(canvasId, cats, type) {
 
     if (!cats.length) return;
 
-    // Guard: container must have visible dimensions — retry on next frame if hidden
-    if (!parent.clientHeight || parent.clientHeight < 10) {
-        requestAnimationFrame(() => renderPieChart(canvasId, cats, type));
-        return;
-    }
-
     const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
     const labels = cats.map(c => c.icon + ' ' + c.name);
     const data = cats.map(c => c.amount);
 
-    const chart = new Chart(canvas.getContext('2d'), {
+    try {
+        // Explicitly set canvas dimensions BEFORE creating chart
+        canvas.width = parent.clientWidth || 300;
+        canvas.height = 220;
+
+        const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, cats.length), borderWidth: 0 }] },
         options: {
@@ -560,6 +559,7 @@ function renderPieChart(canvasId, cats, type) {
     });
     if (type === 'expense') chartExpensePie = chart;
     else chartIncomePie = chart;
+    } catch(e) { console.error('PieChart error:', e); }
 }
 
 function renderDailyChart(canvasId, daily) {
