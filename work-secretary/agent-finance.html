@@ -74,6 +74,17 @@
         .legend-name { color:var(--text); font-weight:500; white-space:nowrap; }
         .legend-pct { color:var(--text3); }
         .legend-amt { color:var(--text2); margin-left:2px; }
+        .stacked-bar-wrap { width:100%; margin-top:10px; }
+        .stacked-bar { display:flex; width:100%; height:28px; border-radius:6px; overflow:hidden; cursor:pointer; }
+        .stacked-bar-seg { height:100%; transition:all .2s; position:relative; min-width:4px; }
+        .stacked-bar-seg:hover { opacity:0.8; transform:scaleY(1.1); }
+        .stacked-bar-seg:hover .seg-tooltip { display:block; }
+        .seg-tooltip { display:none; position:absolute; bottom:32px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.95); color:#e2e8f0; padding:6px 12px; border-radius:6px; font-size:.75rem; white-space:nowrap; border:1px solid rgba(255,255,255,0.1); z-index:10; pointer-events:none; }
+        .seg-tooltip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:rgba(15,23,42,0.95); }
+        .stacked-bar-labels { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; }
+        .stacked-bar-label { display:flex; align-items:center; gap:4px; font-size:.72rem; color:var(--text3); }
+        .stacked-bar-label .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .stacked-bar-label .lb-name { color:var(--text2); }
 
         .rpt-cat-list { display:flex; flex-direction:column; gap:4px; }
         .rpt-cat-item { display:flex; justify-content:space-between; padding:10px 14px; background:var(--bg-card); border-radius:var(--rad-sm); font-size:.85rem; }
@@ -543,23 +554,28 @@ function renderPieChart(canvasId, cats, type) {
         return;
     }
 
-    const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
+    const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316'];
     const sorted = [...cats].sort((a, b) => b.amount - a.amount);
-    const total = sorted.reduce((s, c) => s + c.amount, 0);
+
+    // Top 5 + combine rest as "其他"
+    const top5 = sorted.slice(0, 5);
+    const otherAmt = sorted.slice(5).reduce((s, c) => s + c.amount, 0);
+    const chartCats = [...top5];
+    if (otherAmt > 0) chartCats.push({ name: '其他', icon: '📦', amount: otherAmt });
+    const total = chartCats.reduce((s, c) => s + c.amount, 0);
 
     try {
         canvas.width = parent.clientWidth || 300;
         canvas.height = 200;
 
-        // Simple single-ring doughnut — no datalabels on chart
         const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         plugins: [ChartDataLabels],
         data: {
-            labels: sorted.map(c => c.icon + ' ' + c.name),
+            labels: chartCats.map(c => c.icon + ' ' + c.name),
             datasets: [{
-                data: sorted.map(c => c.amount),
-                backgroundColor: sorted.map((_, i) => colors[i % colors.length]),
+                data: chartCats.map(c => c.amount),
+                backgroundColor: chartCats.map((_, i) => i < 5 ? colors[i % colors.length] : '#334155'),
                 borderWidth: 2,
                 borderColor: '#0b1120',
                 borderRadius: 3,
@@ -573,7 +589,7 @@ function renderPieChart(canvasId, cats, type) {
             animation: { animateRotate: true, duration: 600, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
-                datalabels: { display: false },  // No labels on the chart itself
+                datalabels: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
@@ -587,9 +603,11 @@ function renderPieChart(canvasId, cats, type) {
             onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const idx = elements[0].index;
-                    const catName = sorted[idx].name.replace(/['"]/g, '');
+                    const c = chartCats[idx];
+                    if (c.name === '其他') return;
+                    // Find original category by name match
                     const catList = type === 'expense' ? categories.expense : categories.income;
-                    const match = catList.find(c => c.name === catName);
+                    const match = catList.find(x => x.name === c.name);
                     goToTransactions(match ? match.id : '', type);
                 }
             },
@@ -598,22 +616,33 @@ function renderPieChart(canvasId, cats, type) {
     if (type === 'expense') chartExpensePie = chart;
     else chartIncomePie = chart;
 
-    // ─── Render horizontal legend below chart ───
-    const legendEl = document.getElementById(legendId);
-    legendEl.innerHTML = sorted.map((c, i) => {
-        const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
-        const color = colors[i % colors.length];
-        // Simple ASCII bar
-        const barW = Math.round(pct / 2);
-        const bar = '█'.repeat(barW) + '░'.repeat(Math.max(0, 30 - barW));
-        return `<div class="chart-legend-item" onclick="goToTransactions('${(type==='expense'?categories.expense:categories.income).find(x=>x.name===c.name)?.id||''}','${type}')">
-            <span class="legend-dot" style="background:${color}"></span>
-            <span class="legend-name">${c.icon} ${c.name}</span>
-            <span class="legend-pct">${pct}%</span>
-            <span class="bar-preview" style="font-size:.6rem;color:${color};letter-spacing:-1px;opacity:0.6">${bar}</span>
-            <span class="legend-amt">NT$${(c.amount >= 10000 ? (c.amount/1000).toFixed(0)+'k' : c.amount.toLocaleString())}</span>
+    // ─── 100% stacked horizontal bar below chart ───
+    const legEl = document.getElementById(legendId);
+    legEl.innerHTML = `
+        <div class="stacked-bar-wrap">
+            <div class="stacked-bar">
+                ${chartCats.map((c, i) => {
+                    const pct = total > 0 ? ((c.amount / total) * 100) : 0;
+                    const color = i < 5 ? colors[i % colors.length] : '#334155';
+                    const amtStr = 'NT$' + (c.amount >= 10000 ? (c.amount/1000).toFixed(0)+'k' : c.amount.toLocaleString());
+                    const pctStr = pct.toFixed(1) + '%';
+                    return `<div class="stacked-bar-seg" style="width:${pct}%;background:${color}">
+                        <div class="seg-tooltip">${c.icon} ${c.name}<br>${amtStr} (${pctStr})</div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div class="stacked-bar-labels">
+                ${chartCats.map((c, i) => {
+                    const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
+                    const color = i < 5 ? colors[i % colors.length] : '#334155';
+                    return `<div class="stacked-bar-label" onclick="goToTransactions('${c.name==='其他'?'':((type==='expense'?categories.expense:categories.income).find(x=>x.name===c.name)?.id||'')}','${type}')" style="cursor:pointer">
+                        <span class="dot" style="background:${color}"></span>
+                        <span class="lb-name">${c.icon} ${c.name}</span>
+                        <span>${pct}%</span>
+                    </div>`;
+                }).join('')}
+            </div>
         </div>`;
-    }).join('');
     } catch(e) { console.error('PieChart error:', e); }
 }
 
