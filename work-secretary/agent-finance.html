@@ -250,7 +250,8 @@
                 <div class="form-group"><label>日期</label><input type="date" id="txDate"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>分類</label><select id="txCategory"></select></div>
+                <div class="form-group"><label>分類 <button type="button" class="btn-add-cat" onclick="addCategory()" title="新增分類" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:.8rem;padding:0 4px">＋新增</button></label>
+                <div style="display:flex;gap:6px"><select id="txCategory" style="flex:1"></select></div></div>
                 <div class="form-group"><label>商家</label><input type="text" id="txMerchant" placeholder="商家名稱"></div>
             </div>
             <div class="form-row">
@@ -347,7 +348,7 @@ function setupTabs() {
 /* ─── Exchange Rates ─── */
 async function loadExchangeRates() {
     try {
-        exchangeRates = await ApiClient.request('/api/finance/exchange-rates');
+        exchangeRates = await ApiClient.request('/finance/exchange-rates');
         const sel = document.getElementById('txCurrency');
         const bSel = document.getElementById('budgetCurrency');
         sel.innerHTML = Object.entries(exchangeRates).map(([k, v]) =>
@@ -360,7 +361,7 @@ async function loadExchangeRates() {
 /* ─── Categories ─── */
 async function loadCategories() {
     try {
-        const data = await ApiClient.request('/api/finance/categories');
+        const data = await ApiClient.request('/finance/categories');
         categories = data;
         populateSelects();
     } catch(e) { console.error(e); }
@@ -384,6 +385,27 @@ function setTxType(type) {
     populateSelects();
 }
 
+/* ─── Add Custom Category ─── */
+async function addCategory() {
+    const name = prompt('請輸入新分類名稱：', '');
+    if (!name || !name.trim()) return;
+    const icon = prompt('請輸入分類圖示（Emoji）：', '📦') || '📦';
+    const tx_type = currentTxType;
+    try {
+        const result = await ApiClient.request('/finance/categories', {
+            method: 'POST',
+            body: JSON.stringify({ name: name.trim(), icon: icon.trim(), tx_type }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        // Re-fetch categories and re-select
+        await loadCategories();
+        document.getElementById('txCategory').value = result.id;
+        showToast(`✅ 已新增分類：${icon} ${name}`, 'success');
+    } catch(e) {
+        showToast('❌ ' + e.message, 'error');
+    }
+}
+
 /* ─── Currency auto-rate ─── */
 document.getElementById('txCurrency')?.addEventListener('change', function() {
     const rate = exchangeRates[this.value]?.rate || 1;
@@ -393,7 +415,7 @@ document.getElementById('txCurrency')?.addEventListener('change', function() {
 /* ─── Summary + Charts ─── */
 async function loadSummary() {
     try {
-        const data = await ApiClient.request('/api/finance/summary');
+        const data = await ApiClient.request('/finance/summary');
         const m = data.month;
         document.getElementById('monthIncome').textContent = 'NT$ ' + (m.total_income||0).toLocaleString();
         document.getElementById('monthExpense').textContent = 'NT$ ' + (m.total_expense||0).toLocaleString();
@@ -497,7 +519,7 @@ async function loadTransactions() {
         const s=document.getElementById('filterStart').value; if(s) params.set('start',s);
         const e=document.getElementById('filterEnd').value; if(e) params.set('end',e);
         const q=document.getElementById('filterSearch').value; if(q) params.set('search',q);
-        const txns = await ApiClient.request('/api/finance/transactions?'+params.toString());
+        const txns = await ApiClient.request('/finance/transactions?'+params.toString());
         const el = document.getElementById('txList');
         el.innerHTML = txns.length ? txns.map(t => renderTxRow(t)).join('') :
             '<div class="tx-empty full"><div class="icon">📝</div><p>無符合條件的記錄</p></div>';
@@ -575,10 +597,10 @@ async function saveTransaction(e) {
     try {
         if (editId) {
             const d={}; fd.forEach((v,k)=>{if(k!=='invoice_image')d[k]=v;});
-            await ApiClient.request('/api/finance/transactions/'+editId, {method:'PUT',body:JSON.stringify(d),headers:{'Content-Type':'application/json'}});
+            await ApiClient.request('/finance/transactions/'+editId, {method:'PUT',body:JSON.stringify(d),headers:{'Content-Type':'application/json'}});
             showToast('✅ 已更新','success');
         } else {
-            await ApiClient.request('/api/finance/transactions', {method:'POST',body:fd});
+            await ApiClient.request('/finance/transactions', {method:'POST',body:fd});
             showToast('✅ 記帳成功','success');
         }
         closeTxModal();
@@ -590,7 +612,7 @@ async function saveTransaction(e) {
 function deleteTx(id) {
     deleteTxId=id; document.getElementById('delModal').classList.add('open');
     document.getElementById('confirmDelBtn').onclick = async function() {
-        try { await ApiClient.request('/api/finance/transactions/'+deleteTxId,{method:'DELETE'}); showToast('✅ 已刪除','success'); document.getElementById('delModal').classList.remove('open'); loadSummary(); loadTransactions(); loadBudgetProgress(); loadReport(); } catch(e) { showToast('❌ '+e.message,'error'); }
+        try { await ApiClient.request('/finance/transactions/'+deleteTxId,{method:'DELETE'}); showToast('✅ 已刪除','success'); document.getElementById('delModal').classList.remove('open'); loadSummary(); loadTransactions(); loadBudgetProgress(); loadReport(); } catch(e) { showToast('❌ '+e.message,'error'); }
     };
 }
 
@@ -598,7 +620,7 @@ function deleteTx(id) {
 async function loadBudgetProgress() {
     try {
         const now = new Date();
-        const data = await ApiClient.request(`/api/finance/budgets/progress?period=monthly&month=${now.getMonth()+1}&year=${now.getFullYear()}`);
+        const data = await ApiClient.request(`/finance/budgets/progress?period=monthly&month=${now.getMonth()+1}&year=${now.getFullYear()}`);
 
         // Summary
         const total = data.total_budget||0;
@@ -657,10 +679,10 @@ async function saveBudget(e) {
     };
     try {
         if (editId) {
-            await ApiClient.request('/api/finance/budgets/'+editId, {method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
+            await ApiClient.request('/finance/budgets/'+editId, {method:'PUT',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
             showToast('✅ 預算已更新','success');
         } else {
-            await ApiClient.request('/api/finance/budgets', {method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
+            await ApiClient.request('/finance/budgets', {method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}});
             showToast('✅ 預算已設定','success');
         }
         closeBudgetModal(); loadBudgetProgress();
@@ -670,7 +692,7 @@ async function saveBudget(e) {
 
 function deleteBudget(id) {
     if (!confirm('確定刪除此預算？')) return;
-    ApiClient.request('/api/finance/budgets/'+id, {method:'DELETE'}).then(() => { showToast('✅ 已刪除','success'); loadBudgetProgress(); }).catch(e => showToast('❌ '+e.message,'error'));
+    ApiClient.request('/finance/budgets/'+id, {method:'DELETE'}).then(() => { showToast('✅ 已刪除','success'); loadBudgetProgress(); }).catch(e => showToast('❌ '+e.message,'error'));
 }
 
 /* ─── Report ─── */
@@ -698,7 +720,7 @@ async function loadReport(range) {
         if (!range) { const a=document.querySelector('.rpt-range-btn.active'); range=a?a.dataset.range:'monthly'; }
         params.set('range',range);
         if (range==='custom') { params.set('start',document.getElementById('rptStart').value||new Date().toISOString().slice(0,10)); params.set('end',document.getElementById('rptEnd').value||new Date().toISOString().slice(0,10)); }
-        const data = await ApiClient.request('/api/finance/report?'+params.toString());
+        const data = await ApiClient.request('/finance/report?'+params.toString());
 
         document.getElementById('rptIncome').textContent='NT$ '+(data.total_income||0).toLocaleString();
         document.getElementById('rptExpense').textContent='NT$ '+(data.total_expense||0).toLocaleString();
