@@ -536,29 +536,89 @@ function renderPieChart(canvasId, cats, type) {
         return;
     }
 
+    if (typeof ChartDataLabels === 'undefined') {
+        setTimeout(() => renderPieChart(canvasId, cats, type), 200);
+        return;
+    }
+
     const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
-    const labels = cats.map(c => c.icon + ' ' + c.name);
-    const data = cats.map(c => c.amount);
+
+    // ─── Build nested ring data ───
+    // Outer ring: all categories (sorted by amount desc)
+    const sorted = [...cats].sort((a, b) => b.amount - a.amount);
+    const outerData = sorted.map(c => c.amount);
+    const outerColors = sorted.map((_, i) => colors[i % colors.length]);
+    const outerLabels = sorted.map(c => c.icon + ' ' + c.name);
+
+    // Inner ring: top 3 grouped + "other" combined
+    const topN = Math.min(3, sorted.length);
+    const innerData = [];
+    const innerColors = [];
+    const innerLabels = [];
+    for (let i = 0; i < topN; i++) {
+        innerData.push(sorted[i].amount);
+        innerColors.push(colors[i % colors.length]);
+        innerLabels.push(sorted[i].icon + ' ' + sorted[i].name);
+    }
+    const otherTotal = sorted.slice(topN).reduce((s, c) => s + c.amount, 0);
+    if (otherTotal > 0) {
+        innerData.push(otherTotal);
+        innerColors.push('#334155');
+        innerLabels.push('📦 其他');
+    }
 
     try {
-        // Explicitly set canvas dimensions BEFORE creating chart
         canvas.width = parent.clientWidth || 300;
         canvas.height = 220;
 
         const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         plugins: [ChartDataLabels],
-        data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, cats.length), borderWidth: 0 }] },
+        data: {
+            labels: outerLabels,
+            datasets: [
+                {
+                    // Outer ring — full detail (thinner)
+                    data: outerData,
+                    backgroundColor: outerColors,
+                    borderWidth: 1,
+                    borderColor: '#0b1120',
+                    borderRadius: 2,
+                    spacing: 1,
+                },
+                {
+                    // Inner ring — grouped (thicker)
+                    data: innerData,
+                    backgroundColor: innerColors,
+                    borderWidth: 2,
+                    borderColor: '#0b1120',
+                    borderRadius: 4,
+                    spacing: 0,
+                }
+            ]
+        },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const datasetLabel = ctx.datasetIndex === 0 ? '細項' : '分組';
+                            const val = ctx.parsed || 0;
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                            return datasetLabel + ': NT$' + val.toLocaleString() + ' (' + pct + '%)';
+                        }
+                    }
+                },
                 datalabels: {
                     display: function(ctx) {
-                        return ctx.dataIndex < 5;
+                        // Only show labels on outer ring, top 5
+                        return ctx.datasetIndex === 0 && ctx.dataIndex < 5;
                     },
                     color: '#e2e8f0',
-                    font: { size: 11, weight: '500' },
+                    font: { size: 10, weight: '500' },
                     anchor: 'end',
                     align: 'end',
                     offset: 4,
@@ -566,25 +626,25 @@ function renderPieChart(canvasId, cats, type) {
                     borderColor: 'rgba(255,255,255,0.12)',
                     borderWidth: 1,
                     borderRadius: 4,
-                    padding: { top: 3, bottom: 3, left: 6, right: 6 },
+                    padding: { top: 2, bottom: 2, left: 5, right: 5 },
                     formatter: function(value, ctx) {
-                        const cat = cats[ctx.dataIndex];
+                        const i = ctx.dataIndex;
+                        const cat = sorted[i];
                         if (!cat) return '';
-                        const total = cats.reduce((s, c) => s + c.amount, 0);
+                        const total = sorted.reduce((s, c) => s + c.amount, 0);
                         const pct = total > 0 ? (cat.amount / total * 100).toFixed(1) : 0;
                         const shortName = cat.name.length > 3 ? cat.name.slice(0, 3) : cat.name;
                         return cat.icon + ' ' + shortName + '\nNT$' + (cat.amount >= 1000 ? (cat.amount/1000).toFixed(1)+'k' : cat.amount.toFixed(0)) + ' (' + pct + '%)';
                     },
                 }
             },
-            cutout: '55%',
+            cutout: '35%',
             layout: { padding: { top: 30, bottom: 30, left: 30, right: 30 } },
             animation: { animateRotate: true, duration: 600, easing: 'easeOutQuart' },
             onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const idx = elements[0].index;
-                    const catName = cats[idx].name.replace(/['"]/g, '');
-                    // Find category ID by name
+                    const catName = sorted[idx].name.replace(/['"]/g, '');
                     const catList = type === 'expense' ? categories.expense : categories.income;
                     const match = catList.find(c => c.name === catName);
                     const catId = match ? match.id : '';
