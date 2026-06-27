@@ -62,8 +62,8 @@
         .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
         .chart-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--rad-md); padding:16px; }
         .chart-card h3 { font-size:.85rem; color:var(--text2); margin-bottom:12px; }
-        .chart-wrap { position:relative; width:100%; max-height:260px; }
-        .chart-canvas { width:100% !important; max-height:260px; }
+        .chart-wrap { position:relative; width:100%; height:240px; max-height:260px; }
+        .chart-canvas { width:100% !important; height:100% !important; max-height:260px; }
 
         .rpt-cat-list { display:flex; flex-direction:column; gap:4px; }
         .rpt-cat-item { display:flex; justify-content:space-between; padding:10px 14px; background:var(--bg-card); border-radius:var(--rad-sm); font-size:.85rem; }
@@ -192,7 +192,7 @@
                 <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div></div>
                 <div class="chart-card"><h3>📥 收入分類（金額）</h3><div class="rpt-cat-list" id="ovIncomeCats"></div></div>
             </div>
-            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="max-height:220px"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
+            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="height:200px;max-height:200px"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
             <div class="card" style="margin-top:16px"><div class="card-hdr"><h2>🕐 近期交易</h2></div><div class="card-body"><div class="tx-list" id="overviewTxns"></div></div></div>
         </div>
 
@@ -247,7 +247,7 @@
                 <div class="chart-card"><h3>📤 支出分類佔比</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartRptExpensePie"></canvas></div></div>
                 <div class="chart-card"><h3>📥 收入分類佔比</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartRptIncomePie"></canvas></div></div>
             </div>
-            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="max-height:220px"><canvas class="chart-canvas" id="chartRptDaily"></canvas></div></div></div>
+            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="height:200px;max-height:200px"><canvas class="chart-canvas" id="chartRptDaily"></canvas></div></div></div>
         </div>
     </div>
 </div>
@@ -520,27 +520,31 @@ async function loadOverview(range) {
 function renderPieChart(canvasId, cats, type) {
     const canvas = document.getElementById(canvasId); if (!canvas) return;
     const parent = canvas.parentElement;
-    canvas.width = parent.clientWidth || 300;
-    canvas.height = Math.min(220, parent.clientHeight || 220);
-    const ctx = canvas.getContext('2d');
 
-    // Destroy previous
+    // Destroy previous chart
     if (type === 'expense') { if (chartExpensePie) { chartExpensePie.destroy(); chartExpensePie=null; } }
     else { if (chartIncomePie) { chartIncomePie.destroy(); chartIncomePie=null; } }
 
-    if (!cats.length) { return; }
+    if (!cats.length) return;
+
+    // Guard: container must have visible dimensions — retry on next frame if hidden
+    if (!parent.clientHeight || parent.clientHeight < 10) {
+        requestAnimationFrame(() => renderPieChart(canvasId, cats, type));
+        return;
+    }
+
     const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
     const labels = cats.map(c => c.icon + ' ' + c.name);
     const data = cats.map(c => c.amount);
 
-    const chart = new Chart(ctx, {
+    const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, cats.length), borderWidth: 0 }] },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             cutout: '55%',
-            animation: false,
+            animation: { animateRotate: true, duration: 600, easing: 'easeOutQuart' },
             onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const idx = elements[0].index;
