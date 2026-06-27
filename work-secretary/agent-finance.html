@@ -67,6 +67,13 @@
         .chart-wrap { position:relative; width:100%; height:280px; max-height:300px; overflow:visible; }
         .chart-wrap-sm { position:relative; width:100%; height:200px; max-height:200px; overflow:visible; }
         .chart-canvas { width:100% !important; height:100% !important; }
+        .chart-legend { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; padding:0 4px; }
+        .chart-legend-item { display:flex; align-items:center; gap:6px; padding:5px 10px; background:var(--bg-card); border-radius:6px; border:1px solid var(--border); font-size:.78rem; cursor:pointer; transition:all .2s; }
+        .chart-legend-item:hover { border-color:var(--blue); background:var(--bg-hover); }
+        .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .legend-name { color:var(--text); font-weight:500; white-space:nowrap; }
+        .legend-pct { color:var(--text3); }
+        .legend-amt { color:var(--text2); margin-left:2px; }
 
         .rpt-cat-list { display:flex; flex-direction:column; gap:4px; }
         .rpt-cat-item { display:flex; justify-content:space-between; padding:10px 14px; background:var(--bg-card); border-radius:var(--rad-sm); font-size:.85rem; }
@@ -188,11 +195,11 @@
                 <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
             </div>
             <div class="chart-grid-wide" style="margin-top:16px">
-                <div class="chart-card"><h3>📤 支出分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div></div>
+                <div class="chart-card"><h3>📤 支出分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div><div class="chart-legend" id="legendExpensePie"></div></div>
                 <div class="chart-card"><h3>📤 支出分類（金額）</h3><div class="rpt-cat-list" id="ovExpenseCats"></div></div>
             </div>
             <div class="chart-grid-wide">
-                <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div></div>
+                <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div><div class="chart-legend" id="legendIncomePie"></div></div>
                 <div class="chart-card"><h3>📥 收入分類（金額）</h3><div class="rpt-cat-list" id="ovIncomeCats"></div></div>
             </div>
             <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap-sm"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
@@ -523,138 +530,90 @@ async function loadOverview(range) {
 function renderPieChart(canvasId, cats, type) {
     const canvas = document.getElementById(canvasId); if (!canvas) return;
     const parent = canvas.parentElement;
+    const legendId = canvasId === 'chartExpensePie' ? 'legendExpensePie' : 'legendIncomePie';
 
-    // Destroy previous chart
+    // Destroy previous
     if (type === 'expense') { if (chartExpensePie) { chartExpensePie.destroy(); chartExpensePie=null; } }
     else { if (chartIncomePie) { chartIncomePie.destroy(); chartIncomePie=null; } }
 
-    if (!cats.length) return;
+    if (!cats.length) { document.getElementById(legendId).innerHTML = ''; return; }
 
-    // Chart.js not loaded yet — wait and retry
-    if (typeof Chart === 'undefined') {
-        setTimeout(() => renderPieChart(canvasId, cats, type), 200);
-        return;
-    }
-
-    if (typeof ChartDataLabels === 'undefined') {
+    if (typeof Chart === 'undefined' || typeof ChartDataLabels === 'undefined') {
         setTimeout(() => renderPieChart(canvasId, cats, type), 200);
         return;
     }
 
     const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#22c55e','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16','#06b6d4','#d946ef'];
-
-    // ─── Build nested ring data ───
-    // Outer ring: all categories (sorted by amount desc)
     const sorted = [...cats].sort((a, b) => b.amount - a.amount);
-    const outerData = sorted.map(c => c.amount);
-    const outerColors = sorted.map((_, i) => colors[i % colors.length]);
-    const outerLabels = sorted.map(c => c.icon + ' ' + c.name);
-
-    // Inner ring: top 3 grouped + "other" combined
-    const topN = Math.min(3, sorted.length);
-    const innerData = [];
-    const innerColors = [];
-    const innerLabels = [];
-    for (let i = 0; i < topN; i++) {
-        innerData.push(sorted[i].amount);
-        innerColors.push(colors[i % colors.length]);
-        innerLabels.push(sorted[i].icon + ' ' + sorted[i].name);
-    }
-    const otherTotal = sorted.slice(topN).reduce((s, c) => s + c.amount, 0);
-    if (otherTotal > 0) {
-        innerData.push(otherTotal);
-        innerColors.push('#334155');
-        innerLabels.push('📦 其他');
-    }
+    const total = sorted.reduce((s, c) => s + c.amount, 0);
 
     try {
         canvas.width = parent.clientWidth || 300;
-        canvas.height = 220;
+        canvas.height = 200;
 
+        // Simple single-ring doughnut — no datalabels on chart
         const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
         plugins: [ChartDataLabels],
         data: {
-            labels: outerLabels,
-            datasets: [
-                {
-                    // Outer ring — full detail (thinner)
-                    data: outerData,
-                    backgroundColor: outerColors,
-                    borderWidth: 1,
-                    borderColor: '#0b1120',
-                    borderRadius: 2,
-                    spacing: 1,
-                },
-                {
-                    // Inner ring — grouped (thicker)
-                    data: innerData,
-                    backgroundColor: innerColors,
-                    borderWidth: 2,
-                    borderColor: '#0b1120',
-                    borderRadius: 4,
-                    spacing: 0,
-                }
-            ]
+            labels: sorted.map(c => c.icon + ' ' + c.name),
+            datasets: [{
+                data: sorted.map(c => c.amount),
+                backgroundColor: sorted.map((_, i) => colors[i % colors.length]),
+                borderWidth: 2,
+                borderColor: '#0b1120',
+                borderRadius: 3,
+                spacing: 2,
+            }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            cutout: '50%',
+            layout: { padding: 10 },
+            animation: { animateRotate: true, duration: 600, easing: 'easeOutQuart' },
             plugins: {
                 legend: { display: false },
+                datalabels: { display: false },  // No labels on the chart itself
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
-                            const datasetLabel = ctx.datasetIndex === 0 ? '細項' : '分組';
                             const val = ctx.parsed || 0;
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                             const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
-                            return datasetLabel + ': NT$' + val.toLocaleString() + ' (' + pct + '%)';
+                            return 'NT$' + val.toLocaleString() + ' (' + pct + '%)';
                         }
                     }
-                },
-                datalabels: {
-                    display: function(ctx) {
-                        // Only show labels on outer ring, top 5
-                        return ctx.datasetIndex === 0 && ctx.dataIndex < 5;
-                    },
-                    color: '#e2e8f0',
-                    font: { size: 10, weight: '500' },
-                    anchor: 'end',
-                    align: 'end',
-                    offset: 4,
-                    backgroundColor: 'rgba(15,23,42,0.8)',
-                    borderColor: 'rgba(255,255,255,0.12)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    padding: { top: 2, bottom: 2, left: 5, right: 5 },
-                    formatter: function(value, ctx) {
-                        const i = ctx.dataIndex;
-                        const cat = sorted[i];
-                        if (!cat) return '';
-                        const total = sorted.reduce((s, c) => s + c.amount, 0);
-                        const pct = total > 0 ? (cat.amount / total * 100).toFixed(1) : 0;
-                        const shortName = cat.name.length > 3 ? cat.name.slice(0, 3) : cat.name;
-                        return cat.icon + ' ' + shortName + '\nNT$' + (cat.amount >= 1000 ? (cat.amount/1000).toFixed(1)+'k' : cat.amount.toFixed(0)) + ' (' + pct + '%)';
-                    },
                 }
             },
-            cutout: '35%',
-            layout: { padding: { top: 30, bottom: 30, left: 30, right: 30 } },
-            animation: { animateRotate: true, duration: 600, easing: 'easeOutQuart' },
             onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const idx = elements[0].index;
                     const catName = sorted[idx].name.replace(/['"]/g, '');
                     const catList = type === 'expense' ? categories.expense : categories.income;
                     const match = catList.find(c => c.name === catName);
-                    const catId = match ? match.id : '';
-                    goToTransactions(catId, type);
+                    goToTransactions(match ? match.id : '', type);
                 }
             },
         }
     });
     if (type === 'expense') chartExpensePie = chart;
     else chartIncomePie = chart;
+
+    // ─── Render horizontal legend below chart ───
+    const legendEl = document.getElementById(legendId);
+    legendEl.innerHTML = sorted.map((c, i) => {
+        const pct = total > 0 ? ((c.amount / total) * 100).toFixed(1) : 0;
+        const color = colors[i % colors.length];
+        // Simple ASCII bar
+        const barW = Math.round(pct / 2);
+        const bar = '█'.repeat(barW) + '░'.repeat(Math.max(0, 30 - barW));
+        return `<div class="chart-legend-item" onclick="goToTransactions('${(type==='expense'?categories.expense:categories.income).find(x=>x.name===c.name)?.id||''}','${type}')">
+            <span class="legend-dot" style="background:${color}"></span>
+            <span class="legend-name">${c.icon} ${c.name}</span>
+            <span class="legend-pct">${pct}%</span>
+            <span class="bar-preview" style="font-size:.6rem;color:${color};letter-spacing:-1px;opacity:0.6">${bar}</span>
+            <span class="legend-amt">NT$${(c.amount >= 10000 ? (c.amount/1000).toFixed(0)+'k' : c.amount.toLocaleString())}</span>
+        </div>`;
+    }).join('');
     } catch(e) { console.error('PieChart error:', e); }
 }
 
