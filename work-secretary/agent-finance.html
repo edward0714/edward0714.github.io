@@ -540,7 +540,7 @@ function renderPieChart(canvasId, cats, type) {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             cutout: '55%',
-            animation: { animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+            animation: false,
             onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const idx = elements[0].index;
