@@ -9,10 +9,6 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <script>
-        // Register the datalabels plugin globally
-        Chart.register(ChartDataLabels);
-    </script>
     <style>
         .agent-nav { display:flex; align-items:center; gap:12px; padding:8px 0; }
         .agent-nav a { display:flex; align-items:center; gap:6px; color:var(--text3); text-decoration:none; font-size:.85rem; padding:4px 10px; border-radius:6px; transition:all .2s; }
@@ -551,6 +547,7 @@ function renderPieChart(canvasId, cats, type) {
 
         const chart = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
+        plugins: [ChartDataLabels],
         data: { labels, datasets: [{ data, backgroundColor: colors.slice(0, cats.length), borderWidth: 0 }] },
         options: {
             responsive: true, maintainAspectRatio: false,
@@ -623,7 +620,6 @@ function renderDailyChart(canvasId, daily) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            plugins: { datalabels: { display: false } },
             animation: { duration: 800, easing: 'easeOutQuart' },
             scales: {
                 x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
