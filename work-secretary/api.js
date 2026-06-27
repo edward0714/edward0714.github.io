@@ -1,5 +1,5 @@
 /**
- * 工作小秘書 — API Client
+ * 愛德華AI私人助理 — API Client
  * 前端與後端 API 的通訊層
  * 
  * 自動偵測：
