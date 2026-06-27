@@ -704,6 +704,24 @@ function goToTransactions(catId, type) {
     document.getElementById('filterType').value = type;
     if (catId) document.getElementById('filterCategory').value = catId;
     else document.getElementById('filterCategory').value = '';
+    // Apply the same time range as the overview
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    let startStr = '', endStr = todayStr;
+    switch (currentOvRange) {
+        case 'daily': startStr = todayStr; break;
+        case 'weekly': { const d = new Date(now); d.setDate(d.getDate() - d.getDay()); startStr = d.toISOString().slice(0, 10); break; }
+        case 'monthly': startStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01'; break;
+        case 'quarterly': { const q = Math.floor(now.getMonth() / 3); startStr = now.getFullYear() + '-' + String(q*3+1).padStart(2,'0') + '-01'; break; }
+        case 'yearly': startStr = now.getFullYear() + '-01-01'; break;
+        case 'custom': {
+            startStr = document.getElementById('ovStart').value || '';
+            endStr = document.getElementById('ovEnd').value || todayStr;
+            break;
+        }
+    }
+    document.getElementById('filterStart').value = startStr;
+    document.getElementById('filterEnd').value = endStr;
     loadTransactions();
 }
 
