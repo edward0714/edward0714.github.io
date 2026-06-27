@@ -39,12 +39,13 @@
 <!-- ════════════════════ Navbar (shared pattern) ════════════════════ -->
 <nav class="navbar">
     <div class="nav-inner">
-        <a href="dashboard.html" class="nav-brand">
-            <span>📋</span>
+        <a href="agents.html" class="nav-brand">
+            <span>🏠</span>
             <strong>愛德華AI私人助理</strong>
         </a>
 
         <div class="nav-links">
+            <a href="agents.html" class="nav-link">🏠 助理</a>
             <a href="dashboard.html" class="nav-link active">儀表板</a>
             <a href="tasks.html" class="nav-link">任務</a>
             <a href="reports.html" class="nav-link">報告</a>
@@ -251,7 +252,96 @@ function formatShortDate(dateStr) {
     return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' }).replace(/星期/g, '週');
 }
 
-/* ─── Priority label ─── */
+/* ─── Calendar time formatting ─── */
+function parseCalIso(isoStr) {
+    if (!isoStr) return { isAllDay: true, date: '', time: '', dateObj: null };
+    // All-day events: "2026-06-26" (no time component)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) {
+        const d = new Date(isoStr + 'T00:00:00');
+        return { isAllDay: true, date: isoStr, time: '', dateObj: d };
+    }
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return { isAllDay: true, date: isoStr, time: '', dateObj: null };
+    const dateStr = d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit', weekday: 'short' }).replace(/星期/g, '週');
+    const timeStr = d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return { isAllDay: false, date: dateStr, time: timeStr, dateObj: d, iso: isoStr };
+}
+
+function formatCalTime(startIso, endIso) {
+    const s = parseCalIso(startIso);
+    const e = parseCalIso(endIso);
+    if (s.isAllDay && e.isAllDay) {
+        if (s.date === e.date) {
+            return '📅 ' + (formatShortDate(startIso) || s.date);
+        }
+        return '📅 ' + (formatShortDate(startIso) || s.date) + ' → ' + (formatShortDate(endIso) || e.date);
+    }
+    // Timed event
+    if (s.date === e.date) {
+        return '🕐 ' + s.date + ' ' + s.time + ' — ' + e.time;
+    }
+    return '🕐 ' + s.date + ' ' + s.time + ' → ' + e.date + ' ' + e.time;
+}
+
+/* ─── Event detail modal ─── */
+function showEventDetail(idx) {
+    const events = window._calEvents || [];
+    const ev = events[idx];
+    if (!ev) return;
+
+    const s = parseCalIso(ev.start);
+    const e = parseCalIso(ev.end);
+
+    // Build time display
+    let timeHtml;
+    if (s.isAllDay && e.isAllDay) {
+        if (s.date === e.date) {
+            const d = formatShortDate(ev.start);
+            timeHtml = d + '（全天）';
+        } else {
+            timeHtml = formatShortDate(ev.start) + ' → ' + formatShortDate(ev.end) + '（全天）';
+        }
+    } else if (s.date === e.date) {
+        timeHtml = s.date + '<br>⏰ ' + s.time + ' — ' + e.time;
+    } else {
+        timeHtml = s.date + ' ' + s.time + '<br>→ ' + e.date + ' ' + e.time;
+    }
+
+    document.getElementById('modalEventTitle').textContent = ev.summary || '無標題';
+    document.getElementById('modalEventTime').innerHTML = '⏰ ' + timeHtml;
+    const locEl = document.getElementById('modalEventLocation');
+    if (ev.location) {
+        locEl.innerHTML = '📍 ' + escapeHtml(ev.location);
+        locEl.style.display = 'flex';
+    } else {
+        locEl.style.display = 'none';
+    }
+    const descEl = document.getElementById('modalEventDesc');
+    if (ev.description) {
+        descEl.innerHTML = escapeHtml(ev.description).replace(/\n/g, '<br>');
+        descEl.style.display = 'block';
+    } else {
+        descEl.style.display = 'none';
+    }
+    if (ev.htmlLink) {
+        document.getElementById('modalEventLink').href = ev.htmlLink;
+        document.getElementById('modalEventLink').style.display = 'inline-flex';
+    } else {
+        document.getElementById('modalEventLink').style.display = 'none';
+    }
+
+    document.getElementById('eventDetailModal').classList.add('open');
+}
+
+function closeEventModal() {
+    document.getElementById('eventDetailModal').classList.remove('open');
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function (e) {
+    const modal = document.getElementById('eventDetailModal');
+    if (e.target === modal) closeEventModal();
+});
 function priorityLabel(p) {
     const map = { 'low': '低', 'medium': '中', 'high': '高', 'urgent': '緊急' };
     return map[p] || p || '';
@@ -296,23 +386,24 @@ async function loadDashboard() {
         // ── Calendar Events ──
         const calList = document.getElementById('calendarSection');
         const calEvents = data.calendar_events || [];
+        window._calEvents = calEvents; // store for modal access
+
         if (calEvents.length === 0) {
             calList.innerHTML =
                 '<div class="empty"><div class="icon">📅</div><h3>近期無行程</h3><p>目前沒有近兩週的行事曆活動</p></div>';
         } else {
             let html = '<div class="cal-list">';
-            calEvents.forEach(ev => {
+            calEvents.forEach((ev, idx) => {
                 const dotColor = ev.color || 'var(--blue)';
+                const timeStr = formatCalTime(ev.start, ev.end);
                 html +=
-                    '<div class="cal-item">' +
+                    '<div class="cal-item" onclick="showEventDetail(' + idx + ')">' +
                         '<span class="cal-dot" style="background:' + dotColor + '"></span>' +
                         '<div class="cal-body">' +
-                            '<div class="cal-title">' + escapeHtml(ev.title || ev.summary || '') + '</div>' +
-                            '<div class="cal-time">' +
-                                (ev.start_date ? formatShortDate(ev.start_date) + (ev.start_time ? ' ' + ev.start_time : '') : '') +
-                                (ev.end_date && ev.end_date !== ev.start_date ? ' — ' + formatShortDate(ev.end_date) : '') +
-                            '</div>' +
+                            '<div class="cal-title">' + escapeHtml(ev.summary || '') + '</div>' +
+                            '<div class="cal-time">' + timeStr + '</div>' +
                         '</div>' +
+                        '<span class="cal-arrow">›</span>' +
                     '</div>';
             });
             html += '</div>';
@@ -397,5 +488,38 @@ function escapeHtml(str) {
 /* ─── Init ─── */
 loadDashboard();
 </script>
+
+<!-- ═══ Event Detail Modal ═══ -->
+<div class="modal" id="eventDetailModal">
+    <div class="modal-overlay" onclick="closeEventModal()"></div>
+    <div class="modal-content modal-lg">
+        <div class="modal-hdr">
+            <h2 id="modalEventTitle">行程標題</h2>
+            <button class="modal-close" onclick="closeEventModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="ev-detail-grid">
+                <div class="ev-detail-row" id="modalEventTime">
+                    <span class="ev-label">⏰ 時間</span>
+                    <span class="ev-value">—</span>
+                </div>
+                <div class="ev-detail-row" id="modalEventLocation">
+                    <span class="ev-label">📍 地點</span>
+                    <span class="ev-value">—</span>
+                </div>
+                <div class="ev-detail-full" id="modalEventDesc">
+                    <div class="ev-label">📝 說明</div>
+                    <div class="ev-value ev-desc-text">—</div>
+                </div>
+                <div class="ev-detail-full">
+                    <a id="modalEventLink" href="#" target="_blank" class="btn btn-primary btn-full" rel="noopener">
+                        🔗 在 Google Calendar 中開啟
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
