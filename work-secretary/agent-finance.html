@@ -250,7 +250,7 @@
                 <div class="form-group"><label>日期</label><input type="date" id="txDate"></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>分類 <button type="button" class="btn-add-cat" onclick="addCategory()" title="新增分類" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:.8rem;padding:0 4px">＋新增</button></label>
+                <div class="form-group"><label>分類 <button type="button" class="btn-add-cat" onclick="addCategory()" title="新增分類" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:.8rem;padding:0 4px">＋新增</button> <button type="button" onclick="manageCategories()" title="管理分類" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;padding:0 4px">✎管理</button></label>
                 <div style="display:flex;gap:6px"><select id="txCategory" style="flex:1"></select></div></div>
                 <div class="form-group"><label>商家</label><input type="text" id="txMerchant" placeholder="商家名稱"></div>
             </div>
@@ -397,13 +397,38 @@ async function addCategory() {
             body: JSON.stringify({ name: name.trim(), icon: icon.trim(), tx_type }),
             headers: { 'Content-Type': 'application/json' }
         });
-        // Re-fetch categories and re-select
         await loadCategories();
         document.getElementById('txCategory').value = result.id;
         showToast(`✅ 已新增分類：${icon} ${name}`, 'success');
     } catch(e) {
         showToast('❌ ' + e.message, 'error');
     }
+}
+
+/* ─── Manage Categories (display + delete user's custom categories) ─── */
+function manageCategories() {
+    const userCats = [...categories.expense, ...categories.income].filter(c => c.id > 21); // IDs > 21 are user-created (21 default cats)
+    if (!userCats.length) {
+        showToast('目前沒有自訂分類可管理', 'error');
+        return;
+    }
+    const msg = userCats.map(c =>
+        `${c.icon} ${c.name} (${c.tx_type === 'expense' ? '支出' : '收入'}) — 點選刪除`
+    ).join('\n');
+    const delName = prompt(`📂 自訂分類列表（點選要刪除的分類名稱）:\n\n${msg}\n\n請輸入要刪除的分類名稱：`, '');
+    if (!delName || !delName.trim()) return;
+    const target = userCats.find(c => c.name === delName.trim());
+    if (!target) {
+        showToast('❌ 找不到此分類', 'error');
+        return;
+    }
+    if (!confirm(`確定刪除「${target.icon} ${target.name}」？\n相關交易將改為「未分類」`)) return;
+    ApiClient.request('/finance/categories/' + target.id, { method: 'DELETE' })
+        .then(() => {
+            showToast(`✅ 已刪除分類：${target.icon} ${target.name}`, 'success');
+            loadCategories();
+        })
+        .catch(e => showToast('❌ ' + e.message, 'error'));
 }
 
 /* ─── Currency auto-rate ─── */
