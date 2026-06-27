@@ -163,18 +163,38 @@
     </div>
 
     <!-- ═══ Overview ═══ -->
-    <div class="finance-panel active" id="panel-overview">
-        <div class="chart-grid">
-            <div class="chart-card"><h3>📤 支出分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div></div>
-            <div class="chart-card"><h3>📤 支出分類（金額）</h3><div class="rpt-cat-list" id="ovExpenseCats"></div></div>
+        <div class="finance-panel active" id="panel-overview">
+            <!-- Range Selector -->
+            <div class="rpt-range" id="overviewRange" style="margin-bottom:16px">
+                <button class="rpt-range-btn" data-ov="daily">📅 日</button>
+                <button class="rpt-range-btn" data-ov="weekly">📅 週</button>
+                <button class="rpt-range-btn active" data-ov="monthly">📅 月</button>
+                <button class="rpt-range-btn" data-ov="quarterly">📅 季</button>
+                <button class="rpt-range-btn" data-ov="yearly">📅 年</button>
+                <button class="rpt-range-btn" data-ov="custom">📅 自訂</button>
+                <div id="ovCustomRange" style="display:none;display:inline-flex;gap:6px;align-items:center">
+                    <input type="date" class="rpt-date-input" id="ovStart"> <span style="color:var(--text3)">—</span>
+                    <input type="date" class="rpt-date-input" id="ovEnd">
+                    <button class="rpt-range-btn" style="background:var(--blue);color:white;border-color:var(--blue)" onclick="loadOverview()">查詢</button>
+                </div>
+            </div>
+            <!-- Dynamic Summary -->
+            <div class="finance-stats" id="overviewStats">
+                <div class="fstat income"><div class="lbl">💰 收入</div><div class="val" id="ovIncome">—</div><div class="sub" id="ovIncomeSub"></div></div>
+                <div class="fstat expense"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
+                <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
+            </div>
+            <div class="chart-grid" style="margin-top:16px">
+                <div class="chart-card"><h3>📤 支出分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div></div>
+                <div class="chart-card"><h3>📤 支出分類（金額）</h3><div class="rpt-cat-list" id="ovExpenseCats"></div></div>
+            </div>
+            <div class="chart-grid">
+                <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div></div>
+                <div class="chart-card"><h3>📥 收入分類（金額）</h3><div class="rpt-cat-list" id="ovIncomeCats"></div></div>
+            </div>
+            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="max-height:220px"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
+            <div class="card" style="margin-top:16px"><div class="card-hdr"><h2>🕐 近期交易</h2></div><div class="card-body"><div class="tx-list" id="overviewTxns"></div></div></div>
         </div>
-        <div class="chart-grid">
-            <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div></div>
-            <div class="chart-card"><h3>📥 收入分類（金額）</h3><div class="rpt-cat-list" id="ovIncomeCats"></div></div>
-        </div>
-        <div class="card"><div class="card-hdr"><h2>📈 本月每日收支</h2></div><div class="card-body"><div class="chart-wrap" style="max-height:220px"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
-        <div class="card" style="margin-top:16px"><div class="card-hdr"><h2>🕐 近期交易</h2></div><div class="card-body"><div class="tx-list" id="overviewTxns"></div></div></div>
-    </div>
 
     <!-- ═══ Transactions ═══ -->
     <div class="finance-panel" id="panel-transactions">
@@ -321,11 +341,12 @@ async function init() {
     document.getElementById('budgetYear').value = new Date().getFullYear();
     await loadExchangeRates();
     await loadCategories();
-    loadSummary();
+    loadOverview();
     loadTransactions();
     loadBudgetProgress();
     loadReport();
     setupTabs();
+    setupOverviewRange();
     setupReportRange();
 }
 
@@ -437,26 +458,57 @@ document.getElementById('txCurrency')?.addEventListener('change', function() {
     document.getElementById('txRate').value = rate;
 });
 
-/* ─── Summary + Charts ─── */
-async function loadSummary() {
+/* ─── Overview — dynamic range ─── */
+let currentOvRange = 'monthly';
+
+function setupOverviewRange() {
+    document.querySelectorAll('#overviewRange .rpt-range-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.dataset.ov === 'custom') {
+                document.getElementById('ovStart').style.display='';
+                document.getElementById('ovEnd').style.display='';
+                btn.nextElementSibling.style.display='inline-flex';
+                return;
+            }
+            document.querySelectorAll('#overviewRange .rpt-range-btn').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('ovStart').style.display='none';
+            document.getElementById('ovEnd').style.display='none';
+            currentOvRange = btn.dataset.ov;
+            loadOverview(currentOvRange);
+        });
+    });
+}
+
+async function loadOverview(range) {
     try {
-        const data = await ApiClient.request('/finance/summary');
-        const m = data.month;
-        document.getElementById('monthIncome').textContent = 'NT$ ' + (m.total_income||0).toLocaleString();
-        document.getElementById('monthExpense').textContent = 'NT$ ' + (m.total_expense||0).toLocaleString();
-        document.getElementById('monthBalance').textContent = 'NT$ ' + (m.balance||0).toLocaleString();
-        document.getElementById('expenseCount').textContent = (m.transaction_count||0) + ' 筆';
+        const params = new URLSearchParams();
+        range = range || currentOvRange;
+        params.set('range', range);
+        if (range === 'custom') {
+            params.set('start', document.getElementById('ovStart').value || new Date().toISOString().slice(0,10));
+            params.set('end', document.getElementById('ovEnd').value || new Date().toISOString().slice(0,10));
+        }
+        const data = await ApiClient.request('/finance/report?'+params.toString());
 
-        renderCatList('ovExpenseCats', m.expense_by_category||[], 'expense', m.total_expense);
-        renderCatList('ovIncomeCats', m.income_by_category||[], 'income', m.total_income);
+        // Summary cards
+        const rangeLabels = {daily:'今日',weekly:'本週',monthly:'本月',quarterly:'本季',yearly:'今年',custom:'自訂區間'};
+        const lbl = rangeLabels[range]||'';
+        document.getElementById('ovIncome').textContent='NT$ '+(data.total_income||0).toLocaleString();
+        document.getElementById('ovExpense').textContent='NT$ '+(data.total_expense||0).toLocaleString();
+        document.getElementById('ovBalance').textContent='NT$ '+(data.balance||0).toLocaleString();
+        document.getElementById('ovIncomeSub').textContent=lbl;
+        document.getElementById('ovExpenseSub').textContent=(data.transaction_count||0)+' 筆';
 
-        // Charts
-        renderPieChart('chartExpensePie', m.expense_by_category||[], 'expense');
-        renderPieChart('chartIncomePie', m.income_by_category||[], 'income');
-        renderDailyChart('chartDaily', m.daily_ledger||[]);
+        // Category lists & charts
+        renderCatList('ovExpenseCats', data.expense_by_category||[], 'expense', data.total_expense);
+        renderCatList('ovIncomeCats', data.income_by_category||[], 'income', data.total_income);
+        renderPieChart('chartExpensePie', data.expense_by_category||[], 'expense');
+        renderPieChart('chartIncomePie', data.income_by_category||[], 'income');
+        renderDailyChart('chartDaily', data.daily_ledger||[]);
 
-        // Recent
-        const recent = data.recent || [];
+        // Recent transactions
+        const recent = data.recent_transactions || [];
         const el = document.getElementById('overviewTxns');
         el.innerHTML = recent.length ? recent.map(t => renderTxRow(t)).join('') :
             '<div class="tx-empty"><div class="icon">📝</div><p>尚無交易</p></div>';
@@ -487,6 +539,7 @@ function renderPieChart(canvasId, cats, type) {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             cutout: '55%',
+            animation: { animateRotate: true, duration: 800, easing: 'easeOutQuart' },
         }
     });
     if (type === 'expense') chartExpensePie = chart;
@@ -515,11 +568,12 @@ function renderDailyChart(canvasId, daily) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            animation: { duration: 800, easing: 'easeOutQuart' },
             scales: {
                 x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
-                y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
             },
-            plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10, padding: 8, font: { size: 11 } } } }
+            plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 10, padding: 8, font: { size: 11 } } } },
         }
     });
     if (canvasId === 'chartDaily') chartDaily = chart;
@@ -629,7 +683,7 @@ async function saveTransaction(e) {
             showToast('✅ 記帳成功','success');
         }
         closeTxModal();
-        loadSummary(); loadTransactions(); loadBudgetProgress(); loadReport();
+        loadOverview(); loadTransactions(); loadBudgetProgress(); loadReport();
     } catch(e) { showToast('❌ '+e.message,'error'); }
     return false;
 }
@@ -637,7 +691,7 @@ async function saveTransaction(e) {
 function deleteTx(id) {
     deleteTxId=id; document.getElementById('delModal').classList.add('open');
     document.getElementById('confirmDelBtn').onclick = async function() {
-        try { await ApiClient.request('/finance/transactions/'+deleteTxId,{method:'DELETE'}); showToast('✅ 已刪除','success'); document.getElementById('delModal').classList.remove('open'); loadSummary(); loadTransactions(); loadBudgetProgress(); loadReport(); } catch(e) { showToast('❌ '+e.message,'error'); }
+        try { await ApiClient.request('/finance/transactions/'+deleteTxId,{method:'DELETE'}); showToast('✅ 已刪除','success'); document.getElementById('delModal').classList.remove('open'); loadOverview(); loadTransactions(); loadBudgetProgress(); loadReport(); } catch(e) { showToast('❌ '+e.message,'error'); }
     };
 }
 
