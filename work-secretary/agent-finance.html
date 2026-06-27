@@ -180,8 +180,8 @@
             </div>
             <!-- Dynamic Summary -->
             <div class="finance-stats" id="overviewStats">
-                <div class="fstat income"><div class="lbl">💰 收入</div><div class="val" id="ovIncome">—</div><div class="sub" id="ovIncomeSub"></div></div>
-                <div class="fstat expense"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
+                <div class="fstat income" onclick="goToTransactions('','income')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor=''"><div class="lbl">💰 收入</div><div class="val" id="ovIncome">—</div><div class="sub" id="ovIncomeSub"></div></div>
+                <div class="fstat expense" onclick="goToTransactions('','expense')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor=''"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
                 <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
             </div>
             <div class="chart-grid" style="margin-top:16px">
@@ -540,6 +540,17 @@ function renderPieChart(canvasId, cats, type) {
             plugins: { legend: { display: false } },
             cutout: '55%',
             animation: { animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const idx = elements[0].index;
+                    const catName = cats[idx].name.replace(/['"]/g, '');
+                    // Find category ID by name
+                    const catList = type === 'expense' ? categories.expense : categories.income;
+                    const match = catList.find(c => c.name === catName);
+                    const catId = match ? match.id : '';
+                    goToTransactions(catId, type);
+                }
+            },
         }
     });
     if (type === 'expense') chartExpensePie = chart;
@@ -583,10 +594,32 @@ function renderDailyChart(canvasId, daily) {
 function renderCatList(elId, cats, type, total) {
     const el = document.getElementById(elId); if (!el) return;
     if (!cats.length) { el.innerHTML = '<div class="tx-empty" style="padding:10px"><p>無資料</p></div>'; return; }
+    // Build name→id lookup from categories
+    const catList = type === 'expense' ? categories.expense : categories.income;
+    const nameToId = {};
+    catList.forEach(c => { nameToId[c.name] = c.id; });
     el.innerHTML = cats.map(c => {
         const pct = total>0 ? (c.amount/total*100).toFixed(1) : 0;
-        return `<div class="rpt-cat-item ${type}"><div class="cat-left">${c.icon} ${c.name}</div><div><span class="cat-amt">NT$ ${c.amount.toLocaleString()}</span><span class="cat-pct">${pct}%</span></div></div>`;
+        const catId = nameToId[c.name] || '';
+        return `<div class="rpt-cat-item ${type}" onclick="goToTransactions('${catId}','${type}')" style="cursor:pointer;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background=''">
+            <div class="cat-left">${c.icon} ${c.name}</div>
+            <div><span class="cat-amt">NT$ ${c.amount.toLocaleString()}</span><span class="cat-pct">${pct}%</span></div>
+        </div>`;
     }).join('');
+}
+
+/* ─── Navigate to transaction list filtered by category/type ─── */
+function goToTransactions(catId, type) {
+    // Switch to transactions tab
+    document.querySelectorAll('.finance-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.finance-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="transactions"]').classList.add('active');
+    document.getElementById('panel-transactions').classList.add('active');
+    // Set filters
+    document.getElementById('filterType').value = type;
+    if (catId) document.getElementById('filterCategory').value = catId;
+    else document.getElementById('filterCategory').value = '';
+    loadTransactions();
 }
 
 /* ─── Transactions ─── */
