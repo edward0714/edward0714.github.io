@@ -214,11 +214,11 @@
                 <div class="fstat expense" onclick="goToTransactions('','expense')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor=''"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
                 <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
             </div>
-            <div class="chart-grid-wide" style="margin-top:16px">
-                <div class="chart-card"><h3>📤 支出分類</h3><div style="display:flex;gap:12px;flex:1;min-height:0"><div class="chart-wrap" style="width:55%;height:220px"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div><div class="chart-side-table" id="legendExpensePie" style="width:45%"></div></div></div>
+            <div style="margin-top:16px">
+                <div class="chart-card"><h3>📤 支出分類</h3><div style="display:flex;gap:16px;flex:1;min-height:0"><div class="chart-wrap" style="width:50%;height:240px"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div><div class="chart-side-table" id="legendExpensePie" style="width:50%"></div></div></div>
             </div>
-            <div class="chart-grid-wide">
-                <div class="chart-card"><h3>📥 收入分類</h3><div style="display:flex;gap:12px;flex:1;min-height:0"><div class="chart-wrap" style="width:55%;height:220px"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div><div class="chart-side-table" id="legendIncomePie" style="width:45%"></div></div></div>
+            <div style="margin-top:16px">
+                <div class="chart-card"><h3>📥 收入分類</h3><div style="display:flex;gap:16px;flex:1;min-height:0"><div class="chart-wrap" style="width:50%;height:240px"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div><div class="chart-side-table" id="legendIncomePie" style="width:50%"></div></div></div>
             </div>
             <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap-sm"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
             <div class="card" style="margin-top:16px"><div class="card-hdr"><h2>🕐 近期交易</h2></div><div class="card-body"><div class="tx-list" id="overviewTxns"></div></div></div>
