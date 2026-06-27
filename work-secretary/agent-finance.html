@@ -65,10 +65,12 @@
         .rpt-date-input { background:var(--bg2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:var(--rad-sm); font-size:.82rem; }
 
         .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
-        .chart-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--rad-md); padding:16px; }
+        .chart-grid-wide { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:24px; }
+        .chart-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--rad-md); padding:16px; overflow:visible; }
         .chart-card h3 { font-size:.85rem; color:var(--text2); margin-bottom:12px; }
-        .chart-wrap { position:relative; width:100%; height:240px; max-height:260px; }
-        .chart-canvas { width:100% !important; height:100% !important; max-height:260px; }
+        .chart-wrap { position:relative; width:100%; height:280px; max-height:300px; overflow:visible; }
+        .chart-wrap-sm { position:relative; width:100%; height:200px; max-height:200px; overflow:visible; }
+        .chart-canvas { width:100% !important; height:100% !important; }
 
         .rpt-cat-list { display:flex; flex-direction:column; gap:4px; }
         .rpt-cat-item { display:flex; justify-content:space-between; padding:10px 14px; background:var(--bg-card); border-radius:var(--rad-sm); font-size:.85rem; }
@@ -189,15 +191,15 @@
                 <div class="fstat expense" onclick="goToTransactions('','expense')" style="cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor=''"><div class="lbl">💳 支出</div><div class="val" id="ovExpense">—</div><div class="sub" id="ovExpenseSub"></div></div>
                 <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="ovBalance">—</div><div class="sub">收入 − 支出</div></div>
             </div>
-            <div class="chart-grid" style="margin-top:16px">
+            <div class="chart-grid-wide" style="margin-top:16px">
                 <div class="chart-card"><h3>📤 支出分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartExpensePie"></canvas></div></div>
                 <div class="chart-card"><h3>📤 支出分類（金額）</h3><div class="rpt-cat-list" id="ovExpenseCats"></div></div>
             </div>
-            <div class="chart-grid">
+            <div class="chart-grid-wide">
                 <div class="chart-card"><h3>📥 收入分類</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartIncomePie"></canvas></div></div>
                 <div class="chart-card"><h3>📥 收入分類（金額）</h3><div class="rpt-cat-list" id="ovIncomeCats"></div></div>
             </div>
-            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="height:200px;max-height:200px"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
+            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap-sm"><canvas class="chart-canvas" id="chartDaily"></canvas></div></div></div>
             <div class="card" style="margin-top:16px"><div class="card-hdr"><h2>🕐 近期交易</h2></div><div class="card-body"><div class="tx-list" id="overviewTxns"></div></div></div>
         </div>
 
@@ -248,11 +250,11 @@
                 <div class="fstat expense"><div class="lbl">💳 支出</div><div class="val" id="rptExpense">—</div></div>
                 <div class="fstat balance"><div class="lbl">⚖️ 結餘</div><div class="val" id="rptBalance">—</div></div>
             </div>
-            <div class="chart-grid">
+            <div class="chart-grid-wide">
                 <div class="chart-card"><h3>📤 支出分類佔比</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartRptExpensePie"></canvas></div></div>
                 <div class="chart-card"><h3>📥 收入分類佔比</h3><div class="chart-wrap"><canvas class="chart-canvas" id="chartRptIncomePie"></canvas></div></div>
             </div>
-            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap" style="height:200px;max-height:200px"><canvas class="chart-canvas" id="chartRptDaily"></canvas></div></div></div>
+            <div class="card"><div class="card-hdr"><h2>📈 每日收支趨勢</h2></div><div class="card-body"><div class="chart-wrap-sm"><canvas class="chart-canvas" id="chartRptDaily"></canvas></div></div></div>
         </div>
     </div>
 </div>
@@ -621,6 +623,7 @@ function renderDailyChart(canvasId, daily) {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
+            plugins: { datalabels: { display: false } },
             animation: { duration: 800, easing: 'easeOutQuart' },
             scales: {
                 x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
