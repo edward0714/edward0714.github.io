@@ -1,69 +1,124 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 產業焦點 - 愛德華專屬AI服務入口網</title>
+<title>AI 產業焦點 - 愛德華AI專屬服務入口網</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI','Noto Sans TC',-apple-system,sans-serif;background:#0b1120;color:#e2e8f0;min-height:100vh}
-.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(96,165,250,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:-1}
-.top-bar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.06)}
-.top-bar a{color:#60a5fa;text-decoration:none;font-size:.85rem;display:flex;align-items:center;gap:6px}
+:root,[data-theme="dark"]{--bg:#0b1120;--bg2:#111827;--bg-card:rgba(255,255,255,0.03);--bg-hover:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.06);--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--blue:#3b82f6;--orange:#f59e0b;--rad-sm:8px;--rad-lg:16px}
+[data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg-card:rgba(0,0,0,0.02);--bg-hover:rgba(0,0,0,0.04);--border:rgba(0,0,0,0.08);--text:#0f172a;--text2:#475569;--text3:#94a3b8}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(96,165,250,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,0.03) 1px,transparent 1px);background-size:60px 60px;z-index:-1;pointer-events:none}
+.container{max-width:800px;margin:0 auto;padding:0 20px 60px}
+.top-bar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border)}
+.top-bar a{color:var(--blue);text-decoration:none;font-size:.85rem;display:flex;align-items:center;gap:6px}
 .top-bar a:hover{text-decoration:underline}
-.top-bar .sep{color:#475569;font-size:.7rem}
-.container{max-width:960px;margin:0 auto;padding:24px 20px 60px}
-.page-hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap}
-.page-hdr h1{font-size:1.5rem;font-weight:700;margin:0}
-.page-hdr .sub{color:#64748b;font-size:.85rem}
-.report-meta{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:24px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px}
-.report-meta .label{font-size:.75rem;color:#64748b}
-.report-meta .val{font-size:.9rem;font-weight:600}
-.report-meta .badge{font-size:.72rem;padding:3px 10px;border-radius:6px;background:rgba(245,158,11,.15);color:#fbbf24;font-weight:500}
-.topic-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px 24px;margin-bottom:14px;transition:all .2s}
-.topic-card:hover{border-color:#f97316;transform:translateY(-2px);box-shadow:0 4px 20px rgba(245,158,11,.1)}
-.topic-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
-.topic-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#f97316,#f59e0b);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0}
-.topic-title{font-size:1.05rem;font-weight:600;line-height:1.4}
-.topic-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.topic-tag{font-size:.7rem;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,.1);color:#60a5fa}
-.topic-tag.security{background:rgba(239,68,68,.1);color:#f87171}
-.topic-tag.ai{background:rgba(245,158,11,.1);color:#fbbf24}
-.topic-tag.it{background:rgba(34,197,94,.1);color:#4ade80}
-.topic-summary{font-size:.85rem;color:#94a3b8;line-height:1.6;margin-bottom:10px}
-.topic-sales{font-size:.82rem;color:#fbbf24;line-height:1.5;padding:10px 14px;background:rgba(245,158,11,.04);border-left:3px solid #f97316;border-radius:4px;margin-bottom:10px}
-.topic-ref{font-size:.75rem;color:#64748b}
-.topic-ref a{color:#60a5fa;text-decoration:none}
-.topic-ref a:hover{text-decoration:underline}
-footer{margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);text-align:center;color:#475569;font-size:12px}
-@media(max-width:640px){.topic-hdr{flex-direction:column}}
+.top-bar .sep{color:var(--text3);font-size:.7rem}
+.page-hdr{text-align:center;padding:40px 0 24px}
+.page-hdr h1{font-size:2rem;font-weight:700;margin-bottom:8px}
+.page-hdr .sub{color:var(--text3);font-size:.9rem}
+
+.tree{margin:0 auto;max-width:600px}
+.year-header{cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rad-lg);margin-bottom:8px;font-size:1.05rem;font-weight:600;transition:all .2s;user-select:none}
+.year-header:hover{background:var(--bg-hover);border-color:var(--border-hover)}
+.year-header .arrow{font-size:.7rem;transition:transform .2s;color:var(--text3)}
+.year-header.open .arrow{transform:rotate(90deg)}
+.year-content{display:none;padding-left:20px;margin-bottom:12px}
+.year-content.show{display:block}
+.month-header{cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--rad-sm);margin-bottom:4px;font-size:.9rem;font-weight:500;color:var(--text2);transition:all .2s;user-select:none}
+.month-header:hover{color:var(--text);background:var(--bg-card)}
+.month-header .arrow{font-size:.65rem;transition:transform .2s;color:var(--text3)}
+.month-header.open .arrow{transform:rotate(90deg)}
+.month-content{display:none;padding-left:24px;margin-bottom:8px}
+.month-content.show{display:block}
+.report-link{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--rad-sm);text-decoration:none;color:var(--blue);font-size:.85rem;transition:all .2s;margin-bottom:2px}
+.report-link:hover{background:rgba(59,130,246,.08);color:#60a5fa}
+.report-link .date{color:var(--text3);font-size:.75rem;margin-left:auto}
+.report-link.latest{border-left:2px solid var(--orange);background:rgba(245,158,11,.04)}
+
+.stats-bar{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:32px}
+.stat-item{text-align:center;padding:16px 24px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--rad-lg);min-width:120px}
+.stat-item .num{font-size:1.8rem;font-weight:700;color:var(--blue)}
+.stat-item .lbl{font-size:.75rem;color:var(--text3);margin-top:4px}
+
+.page-footer{text-align:center;padding:40px 20px;color:var(--text3);font-size:.8rem;border-top:1px solid var(--border)}
+.page-footer a{color:var(--blue);text-decoration:none}
+.badge-new{font-size:.65rem;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,.15);color:#4ade80;margin-left:6px}
+@media(max-width:640px){.page-hdr h1{font-size:1.5rem}}
 </style>
 </head>
 <body>
 <div class="bg-grid"></div>
-<div class="top-bar"><a href="index.html">🏠 回到首頁</a><span class="sep">›</span><span style="color:#e2e8f0;font-size:.85rem;">🤖 AI 產業焦點</span></div>
-<div class="container">
-<div class="page-hdr"><h1>🤖 AI 產業焦點</h1><span class="sub">每週業務銷售話題整理</span></div>
-<div class="report-meta"><div><div class="label">📅 報告週次</div><div class="val" id="metaWeek">—</div></div><div><div class="label">📰 話題數</div><div class="val" id="metaCount">—</div></div><div><div class="label">🎯 適用對象</div><div class="val">業務 · 售前 · 協銷人員</div></div><div><span class="badge">🔄 每週六更新</span></div></div>
-<div id="topicsContainer"></div>
-<footer><p>📎 資料來源：iThome Taiwan · 資安新聞網站 · AI 熱門媒體</p><p style="margin-top:8px;">© 2026 Edward Hu — 自動化產出 · 每週六 10:00 更新</p></footer>
+<div class="top-bar">
+    <a href="index.html">🏠 回到首頁</a><span class="sep">›</span>
+    <span style="color:var(--text);font-size:.85rem;">🤖 AI 產業焦點</span>
 </div>
+
+<div class="container">
+    <div class="page-hdr">
+        <h1>🤖 AI 產業焦點</h1>
+        <p class="sub">每週 AI/IT/資安 業務銷售話題整理 · 每週六上午 10:00 自動更新</p>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="num">3</div>
+            <div class="lbl">📋 累積報告</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">30</div>
+            <div class="lbl">📰 累積話題</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">🎯</div>
+            <div class="lbl">業務 · 售前 · 協銷</div>
+        </div>
+    </div>
+
+    <div class="tree">
+        <div class="year-header open" onclick="toggleSection(this)">
+            <span class="arrow">▶</span> 📅 2026 年
+        </div>
+        <div class="year-content show">
+            <div class="month-header open" onclick="toggleSection(this)">
+                <span class="arrow">▶</span> 📆 07 月 <span style="color:var(--text3);font-size:.75rem;margin-left:4px">3 篇報告</span>
+            </div>
+            <div class="month-content show">
+                <a href="ai-news/2026/07/2026-W30.html" class="report-link latest">
+                    🤖 2026-W30 <span style="color:var(--text2);margin-left:4px">7/20 - 7/26</span>
+                    <span class="badge-new">NEW</span>
+                    <span class="date">7/26 更新</span>
+                </a>
+                <a href="ai-news/2026/07/2026-W29.html" class="report-link">
+                    🤖 2026-W29 <span style="color:var(--text2);margin-left:4px">7/13 - 7/19</span>
+                    <span class="date">7/19 更新</span>
+                </a>
+                <a href="ai-news/2026/07/2026-W28.html" class="report-link">
+                    🤖 2026-W28 <span style="color:var(--text2);margin-left:4px">7/6 - 7/12</span>
+                    <span class="date">7/12 更新</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-footer">
+    <p><a href="index.html">← 返回愛德華專屬AI服務入口網</a></p>
+    <p style="margin-top:8px">🤖 自動化產出 · 每週六 10:00 更新 · © 2026 Edward Hu</p>
+</div>
+
 <script>
-const D={"week":"2026-W28 (7/6-7/12)","topics":[
-{"id":1,"title":"NVIDIA B200 GPU量產延遲衝擊AI伺服器出貨","tags":["ai","it"],"summary":"NVIDIA新一代B200 Blackwell GPU因封裝良率問題，量產時程延後至2026年Q3，導致多家台系伺服器代工廠（廣達、緯創、英業達）出貨遞延。企業客戶面臨GPU供應短缺與價格上漲壓力。","sales_tip":"客戶若抱怨AI伺服器交期太長，可主動詢問其GPU規格需求，推薦替代方案或提前鎖單。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162345"},{"name":"Digitimes","url":"https://www.digitimes.com.tw/iot/article.asp?cat=130&cat1=20&id=0000723456"}]},
-{"id":2,"title":"台積電2奈米製程2026下半年量產推動AI晶片升級","tags":["it","ai"],"summary":"台積電宣布N2（2奈米）製程將於2026下半年如期量產，採用GAA電晶體架構，功耗降低30%以上，資料中心電力效率可望顯著改善。","sales_tip":"可向客戶說明新製程將使AI晶片效能翻倍，建議企業提前規劃2027年硬體升級預算。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162312"},{"name":"TechNews","url":"https://technews.tw/2026/07/08/tsmc-n2-volume-production/"}]},
-{"id":3,"title":"OpenAI推出GPT-5企業版：百萬Token上下文與多模態","tags":["ai"],"summary":"OpenAI於7月正式發布GPT-5 Enterprise，支援100萬Token上下文視窗，整合文字、圖片、音訊、影片多模態理解能力，並提供本地部署選項。API定價較GPT-4降低40%。","sales_tip":"客戶若擔心LLM資安或成本問題，可分享GPT-5本地部署方案與台灣業者POC案例。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162378"},{"name":"TechCrunch","url":"https://techcrunch.com/2026/07/09/openai-gpt-5-enterprise/"}]},
-{"id":4,"title":"微軟發布Copilot Studio 2.0：低程式碼AI Agent","tags":["ai","it"],"summary":"微軟推出Copilot Studio 2.0，允許企業以拖曳方式建立多步驟AI Agent，整合Dynamics 365、Salesforce、SAP等系統，台灣已有製造業者用於供應鏈異常自動應對機器人。","sales_tip":"詢問客戶目前RPA或客服機器人使用情況，推薦Copilot Studio作為低程式碼AI Agent入口。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162355"},{"name":"Microsoft Blog","url":"https://blogs.microsoft.com/ai/2026/07/07/copilot-studio-2-0-announcement/"}]},
-{"id":5,"title":"台灣數位部發布AI基本法草案","tags":["ai","security"],"summary":"數位發展部公布《人工智慧基本法》草案，要求高風險AI系統進行影響評估與演算法揭露，違者最高處1,500萬元罰鍰。預計2027年上路。","sales_tip":"可主動提醒客戶AI合規的時程壓力，提供法遵諮詢或AI治理工具建議。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162367"},{"name":"數位發展部","url":"https://www.moda.gov.tw/press/2026-07-06-001.html"}]},
-{"id":6,"title":"LockBit 4.0鎖定台廠供應鏈勒索攻擊","tags":["security"],"summary":"LockBit勒索軟體4.0利用零時差漏洞入侵台灣多家電子製造業ERP系統，攻擊採供應鏈橫向擴散模式。趨勢科技與中華資安發布緊急應變通報。","sales_tip":"向客戶說明供應鏈資安連鎖效應，推薦供應商安全評估與端點偵測回應方案。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162388"},{"name":"資安人","url":"https://www.isecurity.com.tw/article/detail/20260708-lockbit-4-0-attack/"}]},
-{"id":7,"title":"Google Gemini Ultra 2：邊緣AI晶片效能激增5倍","tags":["ai","it"],"summary":"Google發布Gemini Ultra 2晶片與TPU v7，專為邊緣端AI推論設計，效能提升5倍，功耗僅35W。台灣工業電腦業者研華、友通已規劃導入智慧工廠方案。","sales_tip":"製造業客戶若無法上雲，可介紹Edge AI方案，強調離線運作與低延遲優勢。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162395"},{"name":"Google AI Blog","url":"https://ai.googleblog.com/2026/07/gemini-ultra-2-edge-ai.html"}]},
-{"id":8,"title":"AI驅動新型DDoS攻擊鎖定台灣金融電商","tags":["security"],"summary":"Cloudflare報告揭露AI驅動的新型DDoS攻擊，攻擊者利用生成式AI動態產生HTTP請求繞過WAF。Q2攻擊量成長300%，台灣金融、電商為主要目標。","sales_tip":"可詢問客戶網站是否有異常流量，介紹AI驅動的DDoS防護方案。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162340"},{"name":"Cloudflare Blog","url":"https://blog.cloudflare.com/2026-h1-ddos-threat-report/"}]},
-{"id":9,"title":"鴻海攜手NVIDIA打造台灣AI超級電腦","tags":["ai","it"],"summary":"鴻海與NVIDIA合作，在高雄建置台灣最大AI超級電腦「福爾摩沙二號」，採用20,000顆B300 GPU，運算能力達500 ExaFLOPs，預計2027年初啟用。","sales_tip":"對無法自建AI基礎設施的中型客戶，可推薦算力租賃方案。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162375"},{"name":"經濟日報","url":"https://money.udn.com/money/story/5612/8123456"}]},
-{"id":10,"title":"歐盟AI Act正式生效衝擊台廠供應鏈","tags":["ai","security"],"summary":"歐盟AI Act於2026年7月全面生效，台灣多家出口歐盟的電子與工具機製造商需符合透明度與風險管理要求。BSI台灣推出AI合規輔導方案。","sales_tip":"主動提醒有歐盟客戶的廠商注意供應鏈AI合規條款。","refs":[{"name":"iThome","url":"https://www.ithome.com.tw/news/162385"},{"name":"BSI台灣","url":"https://www.bsigroup.com/zh-TW/ai-act-2026/"}]}
-]};
-document.getElementById('metaWeek').textContent=D.week;
-document.getElementById('metaCount').textContent=D.topics.length+' 則';
-document.getElementById('topicsContainer').innerHTML=D.topics.map((t,i)=>'<div class="topic-card"><div class="topic-hdr"><div class="topic-num">'+(i+1)+'</div><div style="flex:1"><div class="topic-title">'+t.title+'</div><div class="topic-tags">'+(t.tags||[]).map(tg=>'<span class="topic-tag '+tg+'">'+tg+'</span>').join('')+'</div></div></div><div class="topic-summary">'+t.summary+'</div>'+(t.sales_tip?'<div class="topic-sales">💡 '+t.sales_tip+'</div>':'')+'<div class="topic-ref">📎 來源：'+(t.refs||[]).map(r=>'<a href="'+r.url+'" target="_blank">'+r.name+'</a>').join(' · ')+'</div></div>').join('');
+function toggleSection(el) {
+    el.classList.toggle('open');
+    const content = el.nextElementSibling;
+    if (content) content.classList.toggle('show');
+}
+document.querySelectorAll('.year-header.open .arrow, .month-header.open .arrow').forEach(a => {
+    a.style.transform = 'rotate(90deg)';
+});
 </script>
 </body>
 </html>
